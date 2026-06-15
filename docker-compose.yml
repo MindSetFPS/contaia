@@ -1,0 +1,11 @@
+services:
+  contaia:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/data:/app/data
+    environment:
+      - DATABASE_PATH=/app/data/contaia.db
+      - JWT_SECRET=${JWT_SECRET:-change-me-in-production}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
