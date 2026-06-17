@@ -3,6 +3,7 @@ import { AuthProvider } from "./contexts/auth-context";
 import { ClientProvider } from "./contexts/client-context";
 import { Button } from "./components/ui/button";
 import { Calendar } from "./components/ui/calendar";
+import Example from "./components/example";
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
               <>
                 <Button variant={"outline"} type="reset">ContaIA</Button>
                 <Calendar />
+                <Example />
               </>
             } />
             <Route path="*" element={<Navigate to="/" replace />} />
