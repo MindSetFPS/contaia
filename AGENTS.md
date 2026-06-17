@@ -2,8 +2,6 @@
 
 ## Project Timeline
 
-**3 weeks.** All decisions prioritize speed over perfection. Manual testing only — no automated tests.
-
 ## Architecture Overview
 
 ```
@@ -19,6 +17,7 @@ contaia/
 │   │   ├── insights.py      # CRUD + refresh
 │   │   ├── llm.py           # OpenRouter client wrapper + agent loop
 │   │   └── models.py        # Data validation (Pydantic)
+│   ├── tests/               # pytest (QA writes)
 │   ├── scripts/
 │   │   └── seed_data.py     # Synthetic data generator
 │   ├── data/                # SQLite DB file (gitignored)
@@ -48,6 +47,7 @@ contaia/
 | Database | SQLite (sqlite3 module) | No ORM. Raw SQL with `?` parameters |
 | LLM | OpenRouter Python SDK | `pip install openrouter` |
 | Auth | FastAPI + python-jose + passlib | JWT, bcrypt passwords |
+| Testing (backend) | pytest | QA writes API tests |
 | Linter | ruff (Python) + Prettier (TS/JS) | Run before commit |
 | Deployment | VPS (DigitalOcean) | FastAPI serves React build as static files |
 
@@ -333,6 +333,5 @@ make seed       # Generate synthetic test data
 - PDF export
 - Role-based permissions
 - Mobile app
-- Automated tests
 - Data version history or audit trails
 - CI/CD pipeline

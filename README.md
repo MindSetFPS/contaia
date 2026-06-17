@@ -16,6 +16,100 @@ The accountant remains the analyst. The AI accelerates analysis.
 | Carlos, despacho owner | Runs a 3-person firm. Uses ContaIA to delegate analysis to junior staff. Reviews the insights panel before client calls. |
 | The professor | Evaluates the demo. Expects to see a complete workflow: Dashboard → Chat → Insights. |
 
+## Contributing (Gitflow Workflow)
+
+This project follows the [Gitflow](https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow) branching model.
+
+### Branches
+
+| Branch | Purpose | Base |
+|--------|---------|------|
+| `main` | Production-ready code. Merged only from `release` or `hotfix` branches. | — |
+| `develop` | Integration branch for ongoing work. Merged from `feature` branches. | `main` |
+| `feature/*` | New features. Naming: `feature/short-description`. | `develop` |
+| `release/*` | Preparation for a new production release. Naming: `release/x.x.x`. | `develop` |
+| `hotfix/*` | Urgent fixes for production. Naming: `hotfix/short-description`. | `main` |
+
+### Flow Overview
+
+```
+main ─── v0.1.0 ─── v0.2.0 ─── ...
+  │                  ↑
+  │            release/sprint-2
+  │                  ↑
+develop ──────────────────────────
+  │    ↑       ↑           ↑
+  │    │       │           └── feature/clients-select
+  │    │       └── feature/clients-create
+  │    └── feature/auth-login
+  └── feature/auth-register
+```
+
+### Feature Flow (Sprint Day-to-Day)
+
+1. Dev crea branch de `develop`: `feature/short-description`.
+2. Dev implementa y commitea.
+3. Dev abre PR hacia `develop`.
+4. QA prueba en la feature branch o en deploy preview.
+5. Si pasa → squash merge a `develop`.
+6. Si falla → dev corrige en la misma branch, QA re-prueba.
+
+### Release Flow (Fin de Sprint)
+
+1. Cuando `develop` tiene todas las features del sprint completadas, se crea `release/x.x.x` desde `develop`.
+2. Solo bug fixes y metadatos (versión, changelog) en release branch.
+3. QA hace regression testing del flujo completo.
+4. QA aprueba → merge a `main` + tag semántico.
+5. Merge back a `develop`.
+
+```
+git checkout develop
+git checkout -b release/sprint-1
+  → QA regression
+  → Bug fixes si es necesario
+git checkout main
+git merge release/sprint-1
+git tag v0.1.0
+git checkout develop
+git merge release/sprint-1
+```
+
+### Hotfix Flow (Producción)
+
+1. Branch desde `main`: `hotfix/short-description`.
+2. Dev corrige, QA prueba.
+3. Merge a `main` (con tag) y a `develop`.
+
+```
+git checkout main
+git checkout -b hotfix/fix-login-validation
+  → Dev corrige, QA prueba
+git checkout main
+git merge hotfix/fix-login-validation
+git tag v0.1.1
+git checkout develop
+git merge hotfix/fix-login-validation
+```
+
+### Commit Conventions
+
+Use conventional commits:
+
+```
+feat: add monthly summary endpoint
+fix: handle empty upload file
+refactor: extract column mapping logic
+chore: update dependencies
+docs: add contribution guide
+```
+
+### Before Opening a PR
+
+- Pull latest `develop` and rebase your feature branch.
+- Run `make lint` (ruff + prettier).
+- Ensure the app builds and runs without errors.
+- Keep the PR small and focused on a single concern.
+
 ## System Architecture
 
 ### Data Model
@@ -36,7 +130,8 @@ accountants (
 clients (
     id              SERIAL PRIMARY KEY,
     accountant_id   INTEGER NOT NULL REFERENCES accountants(id),
-    name            VARCHAR(255) NOT NULL,
+    nombre_comercial VARCHAR(255) NOT NULL,
+    razon_social    VARCHAR(255) NOT NULL,
     rfc             VARCHAR(13),
     industry        VARCHAR(100)
 )
@@ -103,16 +198,32 @@ products (
     costo_unitario  DECIMAL(12,2)
 )
 
+conversations (
+    id              SERIAL PRIMARY KEY,
+    accountant_id   INTEGER NOT NULL REFERENCES accountants(id),
+    client_id       INTEGER NOT NULL REFERENCES clients(id),
+    created_at      TIMESTAMP DEFAULT NOW()
+)
+
+messages (
+    id              SERIAL PRIMARY KEY,
+    conversation_id INTEGER NOT NULL REFERENCES conversations(id),
+    role            VARCHAR(20) NOT NULL,     -- "user" or "assistant"
+    content         TEXT NOT NULL,
+    chart_config    JSONB,                    -- Only for assistant responses
+    created_at      TIMESTAMP DEFAULT NOW()
+)
+
 insights (
     id              SERIAL PRIMARY KEY,
     accountant_id   INTEGER NOT NULL REFERENCES accountants(id),
     client_id       INTEGER NOT NULL REFERENCES clients(id),
+    period_id       VARCHAR(7) NOT NULL REFERENCES periods(id),
     question        TEXT NOT NULL,            -- Original question ("Top 10 productos")
     answer_text     TEXT NOT NULL,            -- LLM answer at time of save
-    chart_config    JSONB,                    -- Chart config at time of save (non-null, only chart responses can be saved)
+    chart_config    JSONB NOT NULL,           -- Chart config at time of save (non-null, only chart responses can be saved)
     is_refreshable  BOOLEAN DEFAULT FALSE,    -- Can this be re-run with new period?
-    created_at      TIMESTAMP DEFAULT NOW(),
-    last_period_id  VARCHAR(7) NOT NULL REFERENCES periods(id)  -- Period used for the snapshot
+    created_at      TIMESTAMP DEFAULT NOW()
 )
 ```
 
@@ -128,7 +239,7 @@ WHERE accountant_id = current_user.id
 
 This applies to:
 - **Uploads**: The upload form requires `client_id`. Data is written with that client_id. No cross-client data can be inserted.
-- **Chat**: Before generating SQL, the LLM receives the schema context filtered to the selected client. The generated SQL is injected with `client_id = ?` and `accountant_id = ?` parameters. The system executes the SQL with these parameters bound — the LLM cannot override them.
+- **Chat**: Conversations and messages are scoped to `client_id`. The sidebar only shows conversations for the selected client. Before generating SQL, the LLM receives the schema context filtered to the selected client. The generated SQL is injected with `client_id = ?` and `accountant_id = ?` parameters — the LLM cannot override them.
 - **Dashboard**: All KPI queries filter by `client_id` and `accountant_id`.
 - **Insights**: Saved insights are scoped to a `client_id`. The sidebar only loads insights for the selected client.
 
@@ -251,10 +362,10 @@ The landing page after login. Provides a high-level overview before drilling int
 Components:
 - **Sidebar**: List of the accountant's clients. Visible on every page. The currently selected client is highlighted with a distinct background color. Switching clients is a single click on any client name in the sidebar — no confirmation, no save button.
   - Clicking a new client selects it globally: the selection carries across Dashboard, Chat, and Insights.
-  - Switching clients clears the chat conversation and reloads the insights panel for the new client.
+   - Switching clients preserves the previous conversation and starts a new one for the new client. The insights panel reloads for the newly selected client.
   - The dashboard KPIs and charts update to reflect the newly selected client.
   - There is no multi-select. Exactly one client is active at any time.
-  - **Add a client**: A "+" button at the top of the sidebar opens a modal with three fields: client name (required), RFC (optional), industry (optional). On submit, the client is created and automatically selected. No data is uploaded yet — the client appears in the sidebar with a "Sin datos" badge until their first Excel upload.
+   - **Add a client**: A "+" button at the top of the sidebar opens a modal with four fields: nombre comercial (required), razón social (required), RFC (optional), industry (optional). On submit, the client is created and automatically selected. No data is uploaded yet — the client appears in the sidebar with a "Sin datos" badge until their first Excel upload.
 - **Top bar**: A persistent bar across all pages showing the selected client's name (e.g., "Marta García S.A. de C.V.") and a period selector dropdown. If no client is selected, the bar prompts "Selecciona un cliente" and the main content area is empty.
 - **Period selector**: A dropdown showing only periods with uploaded data for the selected client. Chronological order (most recent first). Selecting a period updates all KPIs, charts, and subsequent chat context.
 - **First login**: Accountant lands on Dashboard with no client selected. They must click a client in the sidebar to begin.
@@ -279,7 +390,7 @@ A dedicated page for conversing with the AI about the selected client.
   - Text (Spanish)
   - Inline chart (rendered from JSON config)
   - "Save to insights" button
-- Chat history persists per client. Switching clients clears the chat. There is no session timeout — history is maintained until the client is switched.
+- Chat history persists per client and is organized into conversations. Switching clients preserves the previous conversation and starts a new one. Each conversation has its own history.
 - All messages (user + assistant) are sent with each request within token limits. The backend appends new messages and trims oldest if the context exceeds the model's limit.
 - Context is maintained within a session (follow-up questions work).
 - The sidebar (client list + period selector) remains visible on the left.
@@ -352,6 +463,7 @@ There are no predefined SQL queries or hardcoded thresholds. The LLM decides wha
 | Database | SQLite (dev) / PostgreSQL (prod) | Normalized financial data |
 | LLM | OpenRouter | Model-agnostic access to GPT-4o, Claude, and others. SQL generation, answer synthesis, chart config, column mapping |
 | Auth | FastAPI + python-jose + passlib | JWT-based email/password |
+| Testing (backend) | pytest | QA writes API tests |
 
 ## API Endpoints
 
@@ -368,7 +480,7 @@ There are no predefined SQL queries or hardcoded thresholds. The LLM decides wha
 | Method | Path | Description |
 |--------|------|-------------|
 | GET | /api/clients | List all clients for authenticated accountant |
-| POST | /api/clients | Create a client. Body: {name, rfc?, industry?} |
+| POST | /api/clients | Create a client. Body: {nombre_comercial, razon_social, rfc?, industry?} |
 
 ### Data Upload
 
@@ -381,7 +493,8 @@ There are no predefined SQL queries or hardcoded thresholds. The LLM decides wha
 
 | Method | Path | Description |
 |--------|------|-------------|
-| POST | /api/chat | Send a message. Body: {client_id, message, history: [{role, content}]}. Response: {answer_text, chart_config}. Text-only responses have chart_config: null. |
+| POST | /api/chat | Send a message. Body: {client_id, conversation_id, message, history: [{role, content}]}. Creates a new conversation if conversation_id is null. Response: {answer_text, chart_config, conversation_id}. Text-only responses have chart_config: null. |
+| GET | /api/chat/conversations?client_id=X | List conversations for a client, ordered by most recent |
 | POST | /api/chat/summary | Generate monthly summary. Body: {client_id, period_id}. Response: {answer_text, chart_config} |
 
 ### Insights
@@ -492,3 +605,4 @@ To use: `python scripts/seed_data.py --accounts 3`. The script prints login cred
 - Error handling throughout (LLM unavailable, no data states, upload failures)
 - Empty states (no client selected, no data for client, no insights)
 - UI polish
+
