@@ -43,6 +43,7 @@ contaia/
 | Frontend | React (Vite) + TypeScript | Node 22 |
 | Styling | Tailwind CSS + shadcn/ui | No custom CSS unless necessary |
 | Charts | Recharts | Render from JSON config only |
+| AI Components | [AI Elements](https://elements.ai-sdk.dev/) | Pre-built AI UI components (chat, messages, prompt input, attachments, etc.). Install via `npx ai-elements add <component>`. |
 | Backend | Python 3.12 + FastAPI | Uvicorn server |
 | Database | SQLite (sqlite3 module) | No ORM. Raw SQL with `?` parameters |
 | LLM | OpenRouter Python SDK | `pip install openrouter` |
@@ -211,7 +212,7 @@ POST /api/upload
 | `/login` | No | LoginPage | Email + password form |
 | `/register` | No | RegisterPage | Email + password + name form |
 | `/dashboard` | Yes | DashboardPage | KPIs, mini charts, quick links |
-| `/chat` | Yes | ChatPage | Message input, conversation, chart rendering |
+| `/chat` | Yes | ChatPage | Message input, conversation, chart rendering. Uses AI Elements components (Conversation, Message, PromptInput). |
 | `/insights` | Yes | InsightsPage | Saved insights list + analyze button |
 
 ## Frontend Conventions
@@ -222,6 +223,7 @@ POST /api/upload
 - **TypeScript**: Strict mode. Define types in `/types` or colocated with component. Avoid `any`.
 - **Formatting**: Prettier with default config. Run before commit.
 - **shadcn/ui**: Use existing components. Extend via Tailwind classes, not custom CSS.
+- **AI Elements**: Use [AI Elements](https://elements.ai-sdk.dev/) for all AI-related UI components (chat messages, prompt input, conversations, attachments, artifacts, etc.). Do not build AI-specific UI from scratch. Install via `npx ai-elements add <component>`. Components are added to `src/components/ai-elements/` automatically. The existing shadcn/ui theme applies without extra configuration.
 
 ## Backend Conventions
 
