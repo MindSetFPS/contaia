@@ -563,6 +563,81 @@ Data is generated using Faker with Mexican locale (names, RFCs, addresses, produ
 
 To use: `python scripts/seed_data.py --accounts 3`. The script prints login credentials for each account.
 
+## Getting Started
+
+### Prerequisites
+
+- Python 3.12+
+- Node.js 22+
+- Docker (optional)
+
+### Quick Start
+
+```bash
+# 1. One-command setup (creates venv + installs all deps + copies .env)
+make setup
+
+# 2. Edit .env with your keys
+#    OPENROUTER_API_KEY=sk-or-v1-...
+#    JWT_SECRET=change-me-in-production
+
+# 3. Seed the database with synthetic data
+make seed
+
+# 4. Serve everything (builds frontend + starts server on :8000)
+make serve
+```
+
+Open http://localhost:8000 in your browser.
+
+### Development (hot reload)
+
+Run two terminals in parallel:
+
+```bash
+# Terminal 1: Backend with auto-reload on port 8000
+make dev-backend
+
+# Terminal 2: Frontend with Vite HMR on port 5173 (proxies /api to :8000)
+make dev-frontend
+```
+
+Open http://localhost:5173 in your browser. The frontend automatically proxies API requests to the backend.
+
+### Available Commands
+
+| Command | What it does | Notes |
+|---------|-------------|-------|
+| `make setup` | Creates venv, installs Python + npm deps, copies `.env.example` → `.env` | Run once after cloning |
+| `make dev-backend` | Starts uvicorn with hot reload on port 8000 | Requires `.env` file |
+| `make dev-frontend` | Starts Vite dev server on port 5173 | Requires `make dev-backend` running separately |
+| `make serve` | Builds frontend + starts uvicorn on port 8000 | Single command for production-like serving |
+| `make seed` | Generates synthetic test data | Requires `.env` |
+| `make lint` | Runs ruff (Python) + prettier (TS/JS) checks | Run before committing |
+| `make test` | Runs pytest suite in `backend/tests/` | QA writes these tests |
+| `make docker` | Builds Docker image + runs docker compose | For deployment |
+| `make clean` | Removes venv, node_modules, builds, database | Start fresh |
+
+### Known Issues & Caveats
+
+- **Python version**: The project targets Python 3.12+. If your system runs Python 3.14+, pandas may need to compile from source (no pre-built wheel available yet). This only affects `make setup` time.
+- **.env file**: `make setup` copies `.env.example` to `.env` automatically. You must edit it with your `OPENROUTER_API_KEY` and a `JWT_SECRET` before running the server.
+- **Database path**: The SQLite file is created at `backend/data/contaia.db` on first run. This path is gitignored.
+- **Data upload**: Excel uploads require an LLM API key (OpenRouter). Without it, the upload flow will fail at the column mapping step.
+- **Client schema**: The `clients` table currently uses `name`, `rfc`, `industry` columns. The requirements define `nombre_comercial`, `razon_social`, `rfc`, `industry` — a migration is pending.
+
+### Testing
+
+```bash
+make test
+```
+
+Runs all tests in `backend/tests/`. Tests are written by QA using pytest with an in-memory SQLite database. The test suite covers:
+
+- Auth endpoints (register, login, me)
+- Client CRUD endpoints
+- Full integration flows (register → login → create client → list → select)
+
 ## Development Phases
 
 ### Phase 1: Foundation

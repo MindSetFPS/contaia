@@ -1,4 +1,4 @@
-.PHONY: setup dev build serve docker docker-build clean
+.PHONY: setup dev dev-backend dev-frontend build serve docker docker-build seed lint test clean
 
 VENV = backend/.venv
 PYTHON = $(VENV)/bin/python
@@ -7,7 +7,11 @@ NPM = npm
 
 # --------------- Setup ---------------
 
-setup: $(VENV) frontend/node_modules
+setup: .env $(VENV) frontend/node_modules
+
+.env:
+	cp .env.example .env
+	@echo "⚠️  Edit .env with your OPENROUTER_API_KEY and JWT_SECRET"
 
 $(VENV):
 	python3 -m venv $(VENV)
@@ -55,6 +59,11 @@ seed:
 lint:
 	$(VENV)/bin/ruff check backend/
 	cd frontend && npx prettier --check .
+
+# --------------- Test ---------------
+
+test:
+	$(VENV)/bin/python -m pytest backend/tests/ -v
 
 # --------------- Clean ---------------
 

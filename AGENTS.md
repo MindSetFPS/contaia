@@ -275,11 +275,10 @@ VPS (DigitalOcean Ubuntu)
 ### Quick Start
 
 ```bash
-# 1. One-command setup (creates venv + installs all deps)
+# 1. One-command setup (creates venv + installs all deps + copies .env.example → .env)
 make setup
 
 # 2. Copy env vars and configure
-cp .env.example .env
 # Edit .env with your OPENROUTER_API_KEY and JWT_SECRET
 
 # 3. Seed the database
@@ -313,6 +312,7 @@ docker compose up --build
 
 ```bash
 make lint       # Run ruff + prettier checks
+make test       # Run pytest suite in backend/tests/
 make clean      # Remove venv, node_modules, builds, database
 make seed       # Generate synthetic test data
 ```
