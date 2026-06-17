@@ -381,7 +381,7 @@ Components:
 
 Path: `/chat`
 
-A dedicated page for conversing with the AI about the selected client.
+A dedicated page for conversing with the AI about the selected client. Built with [AI Elements](https://elements.ai-sdk.dev/) components (Conversation, Message, PromptInput).
 
 - Text input at the bottom.
 - Messages displayed in a scrollable container filling the main content area.
@@ -459,6 +459,7 @@ There are no predefined SQL queries or hardcoded thresholds. The LLM decides wha
 |-------|-----------|---------|
 | Frontend | React (Vite) | UI components, routing, chart rendering |
 | Charts | Recharts | Client-side chart rendering from JSON config |
+| AI Components | [AI Elements](https://elements.ai-sdk.dev/) | Pre-built AI UI components (chat, messages, prompt input, attachments, etc.). Install via `npx ai-elements add <component>`. |
 | Backend | Python + FastAPI | REST API, file upload, LLM orchestration |
 | Database | SQLite (dev) / PostgreSQL (prod) | Normalized financial data |
 | LLM | OpenRouter | Model-agnostic access to GPT-4o, Claude, and others. SQL generation, answer synthesis, chart config, column mapping |
