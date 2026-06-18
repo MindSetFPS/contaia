@@ -1,4 +1,4 @@
-.PHONY: setup dev dev-backend dev-frontend build serve docker docker-build seed lint test clean
+.PHONY: setup dev dev-db dev-backend dev-frontend build serve docker docker-build seed lint test clean
 
 VENV = backend/.venv
 PYTHON = $(VENV)/bin/python
@@ -22,6 +22,14 @@ frontend/node_modules:
 	cd frontend && $(NPM) install
 
 # --------------- Development ---------------
+
+dev-db:
+	docker compose -f docker-compose.dev.yml up -d
+
+dev: dev-db seed
+	npx concurrently \
+		"$(UVICORN) app.main:app --reload --port 8000 --app-dir backend" \
+		"cd frontend && $(NPM) run dev"
 
 dev-backend:
 	$(UVICORN) app.main:app --reload --port 8000 --app-dir backend
@@ -71,4 +79,4 @@ clean:
 	rm -rf $(VENV)
 	rm -rf frontend/node_modules
 	rm -rf frontend/dist
-	rm -f backend/data/*.db*
+	# rm -f backend/data/*.db*  # No longer needed — using PostgreSQL
