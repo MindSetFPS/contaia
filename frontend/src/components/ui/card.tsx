@@ -5,7 +5,7 @@ function Card({ className, ...props }: { className?: string; children?: ReactNod
   return (
     <div
       className={cn(
-        "rounded-xl border bg-card text-card-foreground shadow",
+        "rounded-xl border bg-white text-gray-900 shadow",
         className,
       )}
       {...props}
@@ -39,7 +39,7 @@ function CardDescription({
   ...props
 }: { className?: string; children?: ReactNode }) {
   return (
-    <p className={cn("text-sm text-muted-foreground", className)} {...props} />
+    <p className={cn("text-sm text-gray-500", className)} {...props} />
   );
 }
 
