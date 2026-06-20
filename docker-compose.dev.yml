@@ -1,0 +1,23 @@
+services:
+  db:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: contaia
+      POSTGRES_USER: contaia
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-contaia}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U contaia"]
+
+  adminer:
+    image: adminer
+    ports:
+      - "8010:8080"
+    depends_on:
+      - db
+
+volumes:
+  pgdata:

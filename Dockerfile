@@ -23,7 +23,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY backend/ .
 COPY --from=frontend-builder /app/frontend/dist /app/frontend/dist
 
-ENV DATABASE_PATH=data/contaia.db
+ENV DATABASE_URL=postgresql://contaia:contaia@db:5432/contaia
 
 EXPOSE 8000
 

@@ -136,21 +136,12 @@ clients (
     industry        VARCHAR(100)
 )
 
-periods (
-    id              VARCHAR(7) PRIMARY KEY,  -- "2024-01"
-    year            INTEGER NOT NULL,
-    month           INTEGER NOT NULL,
-    label           VARCHAR(50) NOT NULL      -- "Enero 2024"
-)
-
--- Period labels follow Spanish naming: Enero, Febrero, Marzo, Abril, Mayo, Junio,
--- Julio, Agosto, Septiembre, Octubre, Noviembre, Diciembre
+-- Periods are derived from fecha DATE columns — no separate periods table
 
 sales (
     id              SERIAL PRIMARY KEY,
     accountant_id   INTEGER NOT NULL REFERENCES accountants(id),
     client_id       INTEGER NOT NULL REFERENCES clients(id),
-    period_id       VARCHAR(7) NOT NULL REFERENCES periods(id),
     fecha           DATE NOT NULL,
     cliente_nombre  VARCHAR(255) NOT NULL,
     producto        VARCHAR(255) NOT NULL,
@@ -165,7 +156,6 @@ expenses (
     id              SERIAL PRIMARY KEY,
     accountant_id   INTEGER NOT NULL REFERENCES accountants(id),
     client_id       INTEGER NOT NULL REFERENCES clients(id),
-    period_id       VARCHAR(7) NOT NULL REFERENCES periods(id),
     fecha           DATE NOT NULL,
     categoria       VARCHAR(100) NOT NULL,
     descripcion     TEXT,
@@ -177,7 +167,7 @@ payroll (
     id              SERIAL PRIMARY KEY,
     accountant_id   INTEGER NOT NULL REFERENCES accountants(id),
     client_id       INTEGER NOT NULL REFERENCES clients(id),
-    period_id       VARCHAR(7) NOT NULL REFERENCES periods(id),
+    fecha           DATE NOT NULL,
     empleado        VARCHAR(255) NOT NULL,
     puesto          VARCHAR(255),
     salario_bruto   DECIMAL(12,2) NOT NULL,
@@ -191,7 +181,7 @@ products (
     id              SERIAL PRIMARY KEY,
     accountant_id   INTEGER NOT NULL REFERENCES accountants(id),
     client_id       INTEGER NOT NULL REFERENCES clients(id),
-    period_id       VARCHAR(7) NOT NULL REFERENCES periods(id),
+    period_date     DATE NOT NULL,            -- First day of the month for this pricing period
     nombre          VARCHAR(255) NOT NULL,
     categoria       VARCHAR(100),
     precio_unitario DECIMAL(12,2),
@@ -218,7 +208,7 @@ insights (
     id              SERIAL PRIMARY KEY,
     accountant_id   INTEGER NOT NULL REFERENCES accountants(id),
     client_id       INTEGER NOT NULL REFERENCES clients(id),
-    period_id       VARCHAR(7) NOT NULL REFERENCES periods(id),
+    period_date     DATE NOT NULL,            -- Period this insight relates to
     question        TEXT NOT NULL,            -- Original question ("Top 10 productos")
     answer_text     TEXT NOT NULL,            -- LLM answer at time of save
     chart_config    JSONB NOT NULL,           -- Chart config at time of save (non-null, only chart responses can be saved)
@@ -269,9 +259,9 @@ Additionally:
    - The LLM also detects which period(s) the data covers by inspecting date values in the sample rows.
 6. The mapping is applied using pandas operations across the entire DataFrame. No per-row LLM calls.
 7. Data is upserted into the appropriate database table in a single batch operation:
-   - Upsert key: `(accountant_id, client_id, period_id)`.
-   - If rows for that key already exist, they are replaced in one transaction.
-   - Periods are auto-populated in the `periods` table based on dates found in the data.
+   - Upsert key: `(accountant_id, client_id)` + date range.
+   - If rows for that key and date range already exist, they are replaced in one transaction.
+   - Periods are derived from the `fecha` column during upload.
 8. The accountant sees an upload summary:
    ```
    ✅ Ventas — Abril 2025
@@ -381,7 +371,7 @@ Components:
 
 Path: `/chat`
 
-A dedicated page for conversing with the AI about the selected client.
+A dedicated page for conversing with the AI about the selected client. Built with [AI Elements](https://elements.ai-sdk.dev/) components (Conversation, Message, PromptInput).
 
 - Text input at the bottom.
 - Messages displayed in a scrollable container filling the main content area.
@@ -459,8 +449,9 @@ There are no predefined SQL queries or hardcoded thresholds. The LLM decides wha
 |-------|-----------|---------|
 | Frontend | React (Vite) | UI components, routing, chart rendering |
 | Charts | Recharts | Client-side chart rendering from JSON config |
-| Backend | Python + FastAPI | REST API, file upload, LLM orchestration |
-| Database | SQLite (dev) / PostgreSQL (prod) | Normalized financial data |
+| AI Components | [AI Elements](https://elements.ai-sdk.dev/) | Pre-built AI UI components (chat, messages, prompt input, attachments, etc.). Install via `npx ai-elements add <component>`. |
+| Backend | Python + FastAPI + SQLModel | REST API, file upload, LLM orchestration. SQLModel ORM with raw SQL for LLM agent queries. |
+| Database | PostgreSQL | Normalized financial data, managed via SQLModel metadata.create_all on startup |
 | LLM | OpenRouter | Model-agnostic access to GPT-4o, Claude, and others. SQL generation, answer synthesis, chart config, column mapping |
 | Auth | FastAPI + python-jose + passlib | JWT-based email/password |
 | Testing (backend) | pytest | QA writes API tests |
@@ -495,28 +486,28 @@ There are no predefined SQL queries or hardcoded thresholds. The LLM decides wha
 |--------|------|-------------|
 | POST | /api/chat | Send a message. Body: {client_id, conversation_id, message, history: [{role, content}]}. Creates a new conversation if conversation_id is null. Response: {answer_text, chart_config, conversation_id}. Text-only responses have chart_config: null. |
 | GET | /api/chat/conversations?client_id=X | List conversations for a client, ordered by most recent |
-| POST | /api/chat/summary | Generate monthly summary. Body: {client_id, period_id}. Response: {answer_text, chart_config} |
+| POST | /api/chat/summary | Generate monthly summary. Body: {client_id, period_date}. Response: {answer_text, chart_config} |
 
 ### Insights
 
 | Method | Path | Description |
 |--------|------|-------------|
 | GET | /api/insights?client_id=X | List insights for a client |
-| POST | /api/insights | Save an insight. Body: {client_id, question, answer_text, chart_config (required), is_refreshable, period_id}. Only chart responses can be saved. |
-| POST | /api/insights/:id/refresh | Re-execute the insight's question. Body: {period_id?} |
+| POST | /api/insights | Save an insight. Body: {client_id, question, answer_text, chart_config (required), is_refreshable, period_date}. Only chart responses can be saved. |
+| POST | /api/insights/:id/refresh | Re-execute the insight's question. Body: {period_date?} |
 | DELETE | /api/insights/:id | Delete an insight |
 
 ### Dashboard
 
 | Method | Path | Description |
 |--------|------|-------------|
-| GET | /api/dashboard?client_id=X&period_id=Y | Returns KPI data, period-over-period changes, mini chart data. Cash flow is derived from (sales collected - expenses paid) across the available periods. |
+| GET | /api/dashboard?client_id=X&period_date=Y | Returns KPI data, period-over-period changes, mini chart data. Cash flow is derived from (sales collected - expenses paid) across the available periods. |
 
 ### Proactive Insights
 
 | Method | Path | Description |
 |--------|------|-------------|
-| POST | /api/insights/analyze?client_id=X&period_id=Y | Runs on-demand analysis. Sends data summary to LLM. Returns list of notable findings: [{title, description, chart_config?}]. No server-side caching — every call re-analyzes. |
+| POST | /api/insights/analyze?client_id=X&period_date=Y | Runs on-demand analysis. Sends data summary to LLM. Returns list of notable findings: [{title, description, chart_config?}]. No server-side caching — every call re-analyzes. |
 
 ## Scope Boundaries
 
@@ -570,6 +561,9 @@ To use: `python scripts/seed_data.py --accounts 3`. The script prints login cred
 - Python 3.12+
 - Node.js 22+
 - Docker (optional)
+
+> **Windows**: El Makefile usa comandos Unix (`cp`, `rm`, `python3`, paths POSIX). No funciona en CMD ni PowerShell.
+> Usa **WSL2** (recomendado), **Git Bash**, o corre los comandos manualmente. Alternativamente, `docker compose up --build` funciona sin Makefile.
 
 ### Quick Start
 

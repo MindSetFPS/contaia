@@ -9,7 +9,7 @@ contaia/
 ├── backend/             # Python 3.12 + FastAPI
 │   ├── app/
 │   │   ├── main.py          # FastAPI app, CORS, static file mount
-│   │   ├── db.py            # SQLite connection, schema init
+│   │   ├── db.py            # PostgreSQL connection, schema init
 │   │   ├── auth.py          # Register, login, JWT
 │   │   ├── upload.py        # Excel upload + LLM normalization
 │   │   ├── chat.py          # Agent loop endpoint
@@ -20,7 +20,7 @@ contaia/
 │   ├── tests/               # pytest (QA writes)
 │   ├── scripts/
 │   │   └── seed_data.py     # Synthetic data generator
-│   ├── data/                # SQLite DB file (gitignored)
+│   ├── data/                # Local data (gitignored)
 │   └── requirements.txt
 ├── frontend/            # React (Vite) + TypeScript + Tailwind + shadcn/ui
 │   ├── src/
@@ -43,8 +43,9 @@ contaia/
 | Frontend | React (Vite) + TypeScript | Node 22 |
 | Styling | Tailwind CSS + shadcn/ui | No custom CSS unless necessary |
 | Charts | Recharts | Render from JSON config only |
+| AI Components | [AI Elements](https://elements.ai-sdk.dev/) | Pre-built AI UI components (chat, messages, prompt input, attachments, etc.). Install via `npx ai-elements add <component>`. |
 | Backend | Python 3.12 + FastAPI | Uvicorn server |
-| Database | SQLite (sqlite3 module) | No ORM. Raw SQL with `?` parameters |
+| Database | PostgreSQL + SQLModel | ORM for app code, raw SQL via `session.exec(text(sql))` for LLM agent tool |
 | LLM | OpenRouter Python SDK | `pip install openrouter` |
 | Auth | FastAPI + python-jose + passlib | JWT, bcrypt passwords |
 | Testing (backend) | pytest | QA writes API tests |
@@ -79,7 +80,7 @@ The LLM runs in a tool-calling loop using the OpenRouter Python SDK. Implemented
 | Tool | Implementation | Description |
 |------|---------------|-------------|
 | `get_schema` | Returns `{tables: [{name, columns: [{name, type}]}]}` filtered to selected client | Called at conversation start or when LLM needs schema recall |
-| `execute_sql` | Executes read-only SQL. Backend injects `accountant_id = ? AND client_id = ?` as bound parameters | Returns `{columns: string[], rows: any[][]}` or `{error: string}` |
+| `execute_sql` | Executes read-only SQL. Backend injects `accountant_id = %s AND client_id = %s` as bound parameters | Returns `{columns: string[], rows: any[][]}` or `{error: string}` |
 | `generate_chart` | Validates and returns a chart JSON config | Called when the LLM determines a chart would help |
 | `search_insights` | Searches saved insights for the current client by keyword | Enables the LLM to reference past findings |
 
@@ -95,8 +96,8 @@ The LLM runs in a tool-calling loop using the OpenRouter Python SDK. Implemented
 
 ### SQL Safety
 
-- Every SQL query string is parameterized with `?` placeholders
-- The backend binds `accountant_id = ?` and `client_id = ?` — the LLM cannot write these values
+- The LLM tool `execute_sql` runs raw SQL via `session.exec(text(sql))` with bound parameters
+- The backend injects `accountant_id` and `client_id` as bound parameters — the LLM cannot write these values
 - All SQL executes in a read-only transaction
 - No DML statements (INSERT, UPDATE, DELETE, DROP, ALTER) are allowed
 - If the generated SQL contains forbidden keywords, return an error without executing
@@ -135,26 +136,26 @@ The LLM runs in a tool-calling loop using the OpenRouter Python SDK. Implemented
 
 | Method | Path | Details |
 |--------|------|---------|
-| GET | /api/dashboard?client_id=X&period_id=Y | KPIs: ingresos, costos, utilidad, flujo de caja (derived). All with % change vs previous period. Plus mini-chart data (last 6 periods). |
+| GET | /api/dashboard?client_id=X&period_date=Y | KPIs: ingresos, costos, utilidad, flujo de caja (derived). All with % change vs previous period. Plus mini-chart data (last 6 periods). |
 
 ### Insights
 
 | Method | Path | Details |
 |--------|------|---------|
 | GET | /api/insights?client_id=X | List saved insights |
-| POST | /api/insights | `{client_id, question, answer_text, chart_config (required), is_refreshable, period_id}` |
-| POST | /api/insights/:id/refresh | `{period_id?}` — re-executes the saved question |
+| POST | /api/insights | `{client_id, question, answer_text, chart_config (required), is_refreshable, period_date}` |
+| POST | /api/insights/:id/refresh | `{period_date?}` — re-executes the saved question |
 | DELETE | /api/insights/:id | Delete an insight |
-| POST | /api/insights/analyze?client_id=X&period_id=Y | On-demand proactive analysis. Returns `[{title, description, chart_config?}]`. Not persisted. |
+| POST | /api/insights/analyze?client_id=X&period_date=Y | On-demand proactive analysis. Returns `[{title, description, chart_config?}]`. Not persisted. |
 
 ## Database Schema
 
 See full schema in `README.md`. Key points:
 
 - Every data table has `accountant_id` and `client_id` as NOT NULL foreign keys
-- `periods` table is auto-populated from date columns during upload
+- Periods are derived from `fecha DATE` columns — no separate `periods` table
 - `cliente_nombre` in `sales` is NOT NULL
-- `products` has `period_id` for per-period pricing
+- `products` has `period_date` for per-period pricing
 - `insights.chart_config` is JSON — never null (only chart responses can be saved)
 - No migrations system. Schema is defined in `backend/app/db.py` as CREATE TABLE statements. Changes require manual DROP TABLE or versioning.
 
@@ -191,8 +192,7 @@ POST /api/upload
         → LLM returns {column_mapping, transformations, detected_periods}
         → Cache the mapping for next time
   → Apply mapping + transformations across entire DataFrame
-  → Upsert into DB table: DELETE WHERE (accountant_id, client_id, period_id) then INSERT
-  → Auto-populate periods table from date columns
+  → Upsert into DB table: DELETE WHERE (accountant_id, client_id) AND date range then INSERT
   → Return summary: {processed, skipped, unused_columns, period}
 ```
 
@@ -211,7 +211,7 @@ POST /api/upload
 | `/login` | No | LoginPage | Email + password form |
 | `/register` | No | RegisterPage | Email + password + name form |
 | `/dashboard` | Yes | DashboardPage | KPIs, mini charts, quick links |
-| `/chat` | Yes | ChatPage | Message input, conversation, chart rendering |
+| `/chat` | Yes | ChatPage | Message input, conversation, chart rendering. Uses AI Elements components (Conversation, Message, PromptInput). |
 | `/insights` | Yes | InsightsPage | Saved insights list + analyze button |
 
 ## Frontend Conventions
@@ -222,13 +222,14 @@ POST /api/upload
 - **TypeScript**: Strict mode. Define types in `/types` or colocated with component. Avoid `any`.
 - **Formatting**: Prettier with default config. Run before commit.
 - **shadcn/ui**: Use existing components. Extend via Tailwind classes, not custom CSS.
+- **AI Elements**: Use [AI Elements](https://elements.ai-sdk.dev/) for all AI-related UI components (chat messages, prompt input, conversations, attachments, artifacts, etc.). Do not build AI-specific UI from scratch. Install via `npx ai-elements add <component>`. Components are added to `src/components/ai-elements/` automatically. The existing shadcn/ui theme applies without extra configuration.
 
 ## Backend Conventions
 
 - **File structure**: One file per resource (auth.py, upload.py, chat.py, dashboard.py, insights.py)
-- **Database**: raw sqlite3 module. No ORM. All queries written as strings with `?` parameters.
+- **Database**: SQLModel ORM. All application queries use `select(Model).where(...)`. LLM agent tool uses raw SQL via `session.exec(text(sql))`.
   ```python
-  cursor.execute("SELECT ... FROM sales WHERE accountant_id = ? AND client_id = ?", (acc_id, cl_id))
+  session.exec(select(Sale).where(Sale.accountant_id == acc_id, Sale.client_id == cl_id)).all()
   ```
 - **Pydantic**: Use for request/response validation. Define models in `models.py`.
 - **Error handling**: Return HTTP 400 for validation errors, 401 for auth, 404 for not found, 500 for unexpected.
@@ -240,7 +241,8 @@ POST /api/upload
 ```
 # .env (never commit)
 OPENROUTER_API_KEY=sk-or-v1-...
-DATABASE_PATH=data/contaia.db
+DATABASE_URL=postgresql://contaia:contaia@localhost:5432/contaia
+DB_PASSWORD=contaia
 JWT_SECRET=change-me-in-production
 ```
 
@@ -270,32 +272,45 @@ VPS (DigitalOcean Ubuntu)
 
 - Python 3.12+
 - Node.js 22+
-- Docker (optional, for containerized deployment)
+- Docker (required for development — runs PostgreSQL)
 
 ### Quick Start
 
 ```bash
-# 1. One-command setup (creates venv + installs all deps + copies .env.example → .env)
+# 1. One-time setup (creates venv + installs deps + copies .env.example → .env)
 make setup
 
-# 2. Copy env vars and configure
-# Edit .env with your OPENROUTER_API_KEY and JWT_SECRET
+# 2. Edit .env with your OPENROUTER_API_KEY and JWT_SECRET
 
-# 3. Seed the database
-make seed
-
-# 4. Serve everything (builds frontend + starts server on :8000)
-make serve
+# 3. Start development (PostgreSQL + backend reload + frontend HMR)
+make dev
 ```
 
-### Development (hot reload)
+### Development (hot reload, single terminal)
 
 ```bash
-# Terminal 1: Backend with auto-reload
+# One command: starts PostgreSQL → seeds DB → runs FastAPI (reload) + Vite (HMR)
+make dev
+```
+
+### Development (separate terminals, optional)
+
+```bash
+# Terminal 1: Start PostgreSQL in Docker (idempotent)
+make dev-db
+
+# Terminal 2: Backend with auto-reload
 make dev-backend
 
-# Terminal 2: Frontend with Vite HMR (:5173, proxies /api to :8000)
+# Terminal 3: Frontend with Vite HMR (:5173, proxies /api to :8000)
 make dev-frontend
+```
+
+### Production Serve
+
+```bash
+# Build frontend + start production server on :8000
+make serve
 ```
 
 ### Docker
@@ -319,8 +334,8 @@ make seed       # Generate synthetic test data
 
 ### Important Notes
 
-- The database file lives in `backend/data/contaia.db` (gitignored).
-- In production, `DATABASE_PATH` env var should point to a persistent volume.
+- The database is PostgreSQL. Development uses `docker-compose.dev.yml` (started via `make dev-db` or automatically by `make dev`).
+- In production, `DATABASE_URL` env var should point to a managed PostgreSQL instance.
 - The frontend build is served as a static site from FastAPI — no separate web server needed.
 - The `serve` target runs `make build-frontend` then starts uvicorn. It is the single command for "serve the app."
 - The `docker` target runs `docker build` + `docker compose up`. It is the single command for "deploy."
