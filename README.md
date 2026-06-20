@@ -562,6 +562,9 @@ To use: `python scripts/seed_data.py --accounts 3`. The script prints login cred
 - Node.js 22+
 - Docker (optional)
 
+> **Windows**: El Makefile usa comandos Unix (`cp`, `rm`, `python3`, paths POSIX). No funciona en CMD ni PowerShell.
+> Usa **WSL2** (recomendado), **Git Bash**, o corre los comandos manualmente. Alternativamente, `docker compose up --build` funciona sin Makefile.
+
 ### Quick Start
 
 ```bash
