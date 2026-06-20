@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, type ReactNode } from "react";
+import { apiRequest } from "@/lib/api-client";
 
 type User = {
   id: number;
@@ -9,7 +10,9 @@ type User = {
 type AuthContextType = {
   token: string | null;
   user: User | null;
-  login: (token: string, user: User) => void;
+  loading: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  register: (email: string, password: string, name: string) => Promise<void>;
   logout: () => void;
 };
 
@@ -18,10 +21,28 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const login = (t: string, u: User) => {
-    setToken(t);
-    setUser(u);
+  const login = async (email: string, password: string) => {
+    setLoading(true);
+    try {
+      const data = await apiRequest<{ token: string; user: User }>("POST", "/auth/login", { email, password });
+      setToken(data.token);
+      setUser(data.user);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const register = async (email: string, password: string, name: string) => {
+    setLoading(true);
+    try {
+      const data = await apiRequest<{ token: string; user: User }>("POST", "/auth/register", { email, password, name });
+      setToken(data.token);
+      setUser(data.user);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const logout = () => {
@@ -30,7 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ token, user, login, logout }}>
+    <AuthContext.Provider value={{ token, user, loading, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );
