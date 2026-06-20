@@ -7,8 +7,8 @@ from passlib.context import CryptContext
 from sqlmodel import Session, select
 
 from app.database import get_session
-from app.models import Accountant, Client
-from app.schemas import ClientCreate, LoginRequest, LoginResponse, RegisterRequest
+from app.models import Accountant
+from app.schemas import LoginRequest, LoginResponse, RegisterRequest
 
 router = APIRouter()
 pwd_context = CryptContext(schemes=["bcrypt"])
@@ -80,31 +80,3 @@ def login(body: LoginRequest, session: Session = Depends(get_session)):
 def me(user: Accountant = Depends(get_current_user)):
     return user
 
-
-@router.get("/clients")
-def list_clients(
-    user: Accountant = Depends(get_current_user),
-    session: Session = Depends(get_session),
-):
-    clients = session.exec(
-        select(Client).where(Client.accountant_id == user.id).order_by(Client.name)
-    ).all()
-    return clients
-
-
-@router.post("/clients")
-def create_client(
-    body: ClientCreate,
-    user: Accountant = Depends(get_current_user),
-    session: Session = Depends(get_session),
-):
-    client = Client(
-        accountant_id=user.id,
-        name=body.name,
-        rfc=body.rfc,
-        industry=body.industry,
-    )
-    session.add(client)
-    session.commit()
-    session.refresh(client)
-    return client

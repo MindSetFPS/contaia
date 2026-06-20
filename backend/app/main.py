@@ -22,12 +22,14 @@ app.add_middleware(
 )
 
 from app.auth import router as auth_router
+from app.clients import router as clients_router
 from app.upload import router as upload_router
 from app.chat import router as chat_router
 from app.dashboard import router as dashboard_router
 from app.insights import router as insights_router
 
 app.include_router(auth_router, prefix="/api/auth")
+app.include_router(clients_router, prefix="/api/clients")
 app.include_router(upload_router, prefix="/api")
 app.include_router(chat_router, prefix="/api")
 app.include_router(dashboard_router, prefix="/api")
