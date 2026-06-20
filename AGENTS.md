@@ -45,7 +45,7 @@ contaia/
 | Charts | Recharts | Render from JSON config only |
 | AI Components | [AI Elements](https://elements.ai-sdk.dev/) | Pre-built AI UI components (chat, messages, prompt input, attachments, etc.). Install via `npx ai-elements add <component>`. |
 | Backend | Python 3.12 + FastAPI | Uvicorn server |
-| Database | PostgreSQL (psycopg2) | No ORM. Raw SQL with `%s` parameters |
+| Database | PostgreSQL + SQLModel | ORM for app code, raw SQL via `session.exec(text(sql))` for LLM agent tool |
 | LLM | OpenRouter Python SDK | `pip install openrouter` |
 | Auth | FastAPI + python-jose + passlib | JWT, bcrypt passwords |
 | Testing (backend) | pytest | QA writes API tests |
@@ -96,8 +96,8 @@ The LLM runs in a tool-calling loop using the OpenRouter Python SDK. Implemented
 
 ### SQL Safety
 
-- Every SQL query string is parameterized with `%s` placeholders (psycopg2 style)
-- The backend binds `accountant_id = %s` and `client_id = %s` — the LLM cannot write these values
+- The LLM tool `execute_sql` runs raw SQL via `session.exec(text(sql))` with bound parameters
+- The backend injects `accountant_id` and `client_id` as bound parameters — the LLM cannot write these values
 - All SQL executes in a read-only transaction
 - No DML statements (INSERT, UPDATE, DELETE, DROP, ALTER) are allowed
 - If the generated SQL contains forbidden keywords, return an error without executing
@@ -136,26 +136,26 @@ The LLM runs in a tool-calling loop using the OpenRouter Python SDK. Implemented
 
 | Method | Path | Details |
 |--------|------|---------|
-| GET | /api/dashboard?client_id=X&period_id=Y | KPIs: ingresos, costos, utilidad, flujo de caja (derived). All with % change vs previous period. Plus mini-chart data (last 6 periods). |
+| GET | /api/dashboard?client_id=X&period_date=Y | KPIs: ingresos, costos, utilidad, flujo de caja (derived). All with % change vs previous period. Plus mini-chart data (last 6 periods). |
 
 ### Insights
 
 | Method | Path | Details |
 |--------|------|---------|
 | GET | /api/insights?client_id=X | List saved insights |
-| POST | /api/insights | `{client_id, question, answer_text, chart_config (required), is_refreshable, period_id}` |
-| POST | /api/insights/:id/refresh | `{period_id?}` — re-executes the saved question |
+| POST | /api/insights | `{client_id, question, answer_text, chart_config (required), is_refreshable, period_date}` |
+| POST | /api/insights/:id/refresh | `{period_date?}` — re-executes the saved question |
 | DELETE | /api/insights/:id | Delete an insight |
-| POST | /api/insights/analyze?client_id=X&period_id=Y | On-demand proactive analysis. Returns `[{title, description, chart_config?}]`. Not persisted. |
+| POST | /api/insights/analyze?client_id=X&period_date=Y | On-demand proactive analysis. Returns `[{title, description, chart_config?}]`. Not persisted. |
 
 ## Database Schema
 
 See full schema in `README.md`. Key points:
 
 - Every data table has `accountant_id` and `client_id` as NOT NULL foreign keys
-- `periods` table is auto-populated from date columns during upload
+- Periods are derived from `fecha DATE` columns — no separate `periods` table
 - `cliente_nombre` in `sales` is NOT NULL
-- `products` has `period_id` for per-period pricing
+- `products` has `period_date` for per-period pricing
 - `insights.chart_config` is JSON — never null (only chart responses can be saved)
 - No migrations system. Schema is defined in `backend/app/db.py` as CREATE TABLE statements. Changes require manual DROP TABLE or versioning.
 
@@ -192,8 +192,7 @@ POST /api/upload
         → LLM returns {column_mapping, transformations, detected_periods}
         → Cache the mapping for next time
   → Apply mapping + transformations across entire DataFrame
-  → Upsert into DB table: DELETE WHERE (accountant_id, client_id, period_id) then INSERT
-  → Auto-populate periods table from date columns
+  → Upsert into DB table: DELETE WHERE (accountant_id, client_id) AND date range then INSERT
   → Return summary: {processed, skipped, unused_columns, period}
 ```
 
@@ -228,9 +227,9 @@ POST /api/upload
 ## Backend Conventions
 
 - **File structure**: One file per resource (auth.py, upload.py, chat.py, dashboard.py, insights.py)
-- **Database**: raw psycopg2 module. No ORM. All queries written as strings with `%s` parameters. Use `RealDictCursor` for dict-like row access.
+- **Database**: SQLModel ORM. All application queries use `select(Model).where(...)`. LLM agent tool uses raw SQL via `session.exec(text(sql))`.
   ```python
-  cursor.execute("SELECT ... FROM sales WHERE accountant_id = %s AND client_id = %s", (acc_id, cl_id))
+  session.exec(select(Sale).where(Sale.accountant_id == acc_id, Sale.client_id == cl_id)).all()
   ```
 - **Pydantic**: Use for request/response validation. Define models in `models.py`.
 - **Error handling**: Return HTTP 400 for validation errors, 401 for auth, 404 for not found, 500 for unexpected.

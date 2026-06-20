@@ -42,5 +42,5 @@ export type Insight = {
   chart_config: string;
   is_refreshable: boolean;
   created_at: string;
-  last_period_id: string;
+  period_date: string;
 };

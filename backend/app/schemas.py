@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 
 
 class RegisterRequest(BaseModel):
@@ -25,6 +25,7 @@ class ClientCreate(BaseModel):
 
 class ChatRequest(BaseModel):
     client_id: int
+    conversation_id: int | None = None
     message: str
     history: list[dict] = []
 
@@ -32,6 +33,7 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     answer_text: str
     chart_config: dict | None = None
+    conversation_id: int | None = None
 
 
 class InsightCreate(BaseModel):
@@ -40,8 +42,8 @@ class InsightCreate(BaseModel):
     answer_text: str
     chart_config: dict
     is_refreshable: bool = False
-    period_id: str
+    period_date: str
 
 
 class InsightRefresh(BaseModel):
-    period_id: str | None = None
+    period_date: str | None = None
