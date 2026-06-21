@@ -1,13 +1,16 @@
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 
-function Card({ className, ...props }: { className?: string; children?: ReactNode }) {
+function Card({
+  className,
+  ...props
+}: {
+  className?: string;
+  children?: ReactNode;
+}) {
   return (
     <div
-      className={cn(
-        "rounded-xl border bg-white text-gray-900 shadow",
-        className,
-      )}
+      className={cn("rounded-xl border bg-white text-gray-900", className)}
       {...props}
     />
   );
@@ -16,16 +19,25 @@ function Card({ className, ...props }: { className?: string; children?: ReactNod
 function CardHeader({
   className,
   ...props
-}: { className?: string; children?: ReactNode }) {
+}: {
+  className?: string;
+  children?: ReactNode;
+}) {
   return (
-    <div className={cn("flex flex-col space-y-1.5 p-6", className)} {...props} />
+    <div
+      className={cn("flex flex-col space-y-1.5 p-6", className)}
+      {...props}
+    />
   );
 }
 
 function CardTitle({
   className,
   ...props
-}: { className?: string; children?: ReactNode }) {
+}: {
+  className?: string;
+  children?: ReactNode;
+}) {
   return (
     <h3
       className={cn("font-semibold leading-none tracking-tight", className)}
@@ -37,16 +49,20 @@ function CardTitle({
 function CardDescription({
   className,
   ...props
-}: { className?: string; children?: ReactNode }) {
-  return (
-    <p className={cn("text-sm text-gray-500", className)} {...props} />
-  );
+}: {
+  className?: string;
+  children?: ReactNode;
+}) {
+  return <p className={cn("text-sm text-gray-500", className)} {...props} />;
 }
 
 function CardContent({
   className,
   ...props
-}: { className?: string; children?: ReactNode }) {
+}: {
+  className?: string;
+  children?: ReactNode;
+}) {
   return <div className={cn("p-6 pt-0", className)} {...props} />;
 }
 

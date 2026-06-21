@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
+import { Plus } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -16,7 +17,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
-export default function CreateClientDialog() {
+export default function CreateClientDialog({ minimal }: { minimal?: boolean }) {
   const { token } = useAuth();
   const { setSelectedClient } = useClient();
   const [open, setOpen] = useState(false);
@@ -72,7 +73,13 @@ export default function CreateClientDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm">Nuevo cliente</Button>
+        {minimal ? (
+          <button className="flex size-5 items-center justify-center rounded-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+            <Plus className="size-3.5" />
+          </button>
+        ) : (
+          <Button size="sm">Nuevo cliente</Button>
+        )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
