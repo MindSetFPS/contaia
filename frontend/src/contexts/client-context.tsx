@@ -3,6 +3,7 @@ import { createContext, useContext, useState, type ReactNode } from "react";
 type Client = {
   id: number;
   name: string;
+  razon_social?: string;
   rfc?: string;
   industry?: string;
 };
@@ -29,7 +30,12 @@ export function ClientProvider({ children }: { children: ReactNode }) {
 
   return (
     <ClientContext.Provider
-      value={{ selectedClient, selectedPeriod, setSelectedClient, setSelectedPeriod }}
+      value={{
+        selectedClient,
+        selectedPeriod,
+        setSelectedClient,
+        setSelectedPeriod,
+      }}
     >
       {children}
     </ClientContext.Provider>

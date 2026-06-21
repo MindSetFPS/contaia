@@ -19,6 +19,7 @@ class LoginResponse(BaseModel):
 
 class ClientCreate(BaseModel):
     name: str
+    razon_social: str | None = None
     rfc: str | None = None
     industry: str | None = None
 
