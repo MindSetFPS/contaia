@@ -29,7 +29,15 @@ export default function AppLayout() {
           </span>
         </header>
         <main className="flex-1 overflow-auto">
-          <Outlet />
+          {selectedClient ? (
+            <Outlet />
+          ) : (
+            <div className="flex h-full items-center justify-center">
+              <p className="text-sm text-muted-foreground">
+                Selecciona un cliente del menú lateral para comenzar
+              </p>
+            </div>
+          )}
         </main>
       </div>
     </div>
