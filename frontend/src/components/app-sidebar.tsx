@@ -1,8 +1,7 @@
-import { useEffect, useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/auth-context";
 import { useClient } from "@/contexts/client-context";
-import { apiRequest } from "@/lib/api-client";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import CreateClientDialog from "@/components/create-client-dialog";
@@ -15,21 +14,12 @@ const navItems = [
 ];
 
 export default function AppSidebar() {
-  const { token, user, logout } = useAuth();
-  const { selectedClient, setSelectedClient } = useClient();
+  const { user, logout } = useAuth();
+  const { clients, clientsLoading, selectedClient, setSelectedClient } =
+    useClient();
   const navigate = useNavigate();
   const location = useLocation();
-  const [clients, setClients] = useState<Client[]>([]);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-
-  useEffect(() => {
-    if (!token) return;
-    apiRequest<Client[]>("GET", "/clients/", undefined, token)
-      .then(setClients)
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [token]);
 
   const filtered = useMemo(() => {
     if (!search.trim()) return clients;
@@ -72,7 +62,7 @@ export default function AppSidebar() {
           </div>
 
           <div className="space-y-0.5 max-h-[35vh] overflow-y-auto">
-            {loading ? (
+            {clientsLoading ? (
               <div className="flex justify-center py-4">
                 <Spinner />
               </div>

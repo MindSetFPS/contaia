@@ -19,7 +19,7 @@ import {
 
 export default function CreateClientDialog({ minimal }: { minimal?: boolean }) {
   const { token } = useAuth();
-  const { setSelectedClient } = useClient();
+  const { clients, setClients, setSelectedClient } = useClient();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [razonSocial, setRazonSocial] = useState("");
@@ -57,6 +57,7 @@ export default function CreateClientDialog({ minimal }: { minimal?: boolean }) {
         },
         token ?? undefined,
       );
+      setClients([...clients, client]);
       setSelectedClient(client);
       setOpen(false);
       setName("");
