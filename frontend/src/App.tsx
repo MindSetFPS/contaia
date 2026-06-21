@@ -5,6 +5,7 @@ import LoginPage from "./pages/login-page";
 import RegisterPage from "./pages/register-page";
 import DashboardPage from "./pages/dashboard-page";
 import ProfilePage from "./pages/profile-page";
+import AppLayout from "./components/app-layout";
 
 function App() {
   return (
@@ -12,11 +13,13 @@ function App() {
       <AuthProvider>
         <ClientProvider>
           <Routes>
-            <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/me" element={<ProfilePage />} />
+            <Route element={<AppLayout />}>
+              <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/me" element={<ProfilePage />} />
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </ClientProvider>
