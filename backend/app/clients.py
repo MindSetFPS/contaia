@@ -44,12 +44,14 @@ def create_client(
     if not name:
         raise HTTPException(status_code=400, detail="Client name is required")
 
+    razon_social = body.razon_social.strip() if body.razon_social else None
     rfc = _validate_rfc(body.rfc)
     industry = body.industry.strip() if body.industry else None
 
     client = Client(
         accountant_id=user.id,
         name=name,
+        razon_social=razon_social,
         rfc=rfc,
         industry=industry,
     )

@@ -7,6 +7,7 @@ export type User = {
 export type Client = {
   id: number;
   name: string;
+  razon_social?: string;
   rfc?: string;
   industry?: string;
 };

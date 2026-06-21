@@ -7,5 +7,6 @@ class Client(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     accountant_id: int = Field(foreign_key="accountants.id", nullable=False)
     name: str = Field(nullable=False)
+    razon_social: str | None = None
     rfc: str | None = None
     industry: str | None = None
