@@ -48,3 +48,10 @@ class InsightCreate(BaseModel):
 
 class InsightRefresh(BaseModel):
     period_date: str | None = None
+
+
+class UploadResponse(BaseModel):
+    processed: int
+    skipped: int
+    unused_columns: list[str]
+    period: str
