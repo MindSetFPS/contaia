@@ -13,10 +13,11 @@ setup: .env $(VENV) frontend/node_modules
 	cp .env.example .env
 	@echo "⚠️  Edit .env with your OPENROUTER_API_KEY and JWT_SECRET"
 
-$(VENV):
+$(VENV): backend/requirements.txt
 	python3 -m venv $(VENV)
 	$(VENV)/bin/pip install --upgrade pip
 	$(VENV)/bin/pip install -r backend/requirements.txt
+	touch $(VENV)
 
 frontend/node_modules:
 	cd frontend && $(NPM) install
@@ -26,12 +27,12 @@ frontend/node_modules:
 dev-db:
 	docker compose -f docker-compose.dev.yml up -d
 
-dev: dev-db seed
+dev: $(VENV) dev-db seed
 	npx concurrently \
 		"$(UVICORN) app.main:app --reload --port 8000 --app-dir backend" \
 		"cd frontend && $(NPM) run dev"
 
-dev-backend:
+dev-backend: $(VENV)
 	$(UVICORN) app.main:app --reload --port 8000 --app-dir backend
 
 dev-frontend:
@@ -46,7 +47,7 @@ build: build-frontend
 
 # --------------- Serve (one command) ---------------
 
-serve: build
+serve: $(VENV) build
 	$(UVICORN) app.main:app --host 0.0.0.0 --port 8000 --app-dir backend
 
 # --------------- Docker ---------------
@@ -59,18 +60,18 @@ docker: docker-build
 
 # --------------- Seed ---------------
 
-seed:
+seed: $(VENV)
 	$(PYTHON) backend/scripts/seed_data.py
 
 # --------------- Lint ---------------
 
-lint:
+lint: $(VENV)
 	$(VENV)/bin/ruff check backend/
 	cd frontend && npx prettier --check .
 
 # --------------- Test ---------------
 
-test:
+test: $(VENV)
 	$(VENV)/bin/python -m pytest backend/tests/ -v
 
 # --------------- Clean ---------------
