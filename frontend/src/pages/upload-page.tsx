@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/auth-context";
 import { useClient } from "@/contexts/client-context";
 import { apiRequest } from "@/lib/api-client";
@@ -25,9 +25,37 @@ import {
   FileSpreadsheet,
   CheckCircle,
   AlertCircle,
+  History,
 } from "lucide-react";
 
 type UploadStatus = "idle" | "uploading" | "success" | "error";
+
+type UploadRecord = {
+  id: number;
+  filename: string;
+  table_type: string;
+  period_date: string | null;
+  rows_processed: number;
+  rows_skipped: number;
+  created_at: string;
+};
+
+const TABLE_LABELS: Record<string, string> = {
+  ventas: "Ventas",
+  gastos: "Gastos",
+  nomina: "Nómina",
+};
+
+function formatDate(iso: string) {
+  const d = new Date(iso);
+  return d.toLocaleDateString("es-MX", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
 
 export default function UploadPage() {
   const { token } = useAuth();
@@ -42,6 +70,30 @@ export default function UploadPage() {
     period: string;
   } | null>(null);
   const [error, setError] = useState("");
+  const [uploads, setUploads] = useState<UploadRecord[]>([]);
+  const [uploadsLoading, setUploadsLoading] = useState(false);
+
+  const fetchUploads = useCallback(async () => {
+    if (!selectedClient || !token) return;
+    setUploadsLoading(true);
+    try {
+      const data = await apiRequest<UploadRecord[]>(
+        "GET",
+        `/uploads?client_id=${selectedClient.id}`,
+        undefined,
+        token,
+      );
+      setUploads(data);
+    } catch {
+      // silent
+    } finally {
+      setUploadsLoading(false);
+    }
+  }, [selectedClient, token]);
+
+  useEffect(() => {
+    fetchUploads();
+  }, [fetchUploads]);
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0] || null;
@@ -70,6 +122,7 @@ export default function UploadPage() {
       }>("POST", "/upload", formData, token ?? undefined);
       setResult(res);
       setStatus("success");
+      fetchUploads();
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Error al subir el archivo",
@@ -81,7 +134,7 @@ export default function UploadPage() {
   const isValid = selectedClient && tableType && file;
 
   return (
-    <div className="flex flex-1 items-start justify-center p-6">
+    <div className="flex flex-1 flex-col items-center gap-6 p-6">
       <Card className="w-full max-w-xl">
         <CardHeader>
           <CardTitle>Subir datos</CardTitle>
@@ -124,7 +177,7 @@ export default function UploadPage() {
                 type="file"
                 accept=".xlsx"
                 onChange={handleFileChange}
-                className="file:cursor-pointer file:border-0 file:rounded file:bg-gray-100 file:px-3 file:py-1 file:text-xs  hover:file:bg-primary/10"
+                className="file:cursor-pointer file:border-0 file:rounded file:bg-gray-100 file:px-3 file:py-1 file:text-xs hover:file:bg-primary/10"
               />
             </div>
             {file && (
@@ -174,6 +227,65 @@ export default function UploadPage() {
             <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800 flex items-start gap-2">
               <AlertCircle className="mt-0.5 size-4 shrink-0" />
               <span>{error}</span>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card className="w-full max-w-xl">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <History className="size-4" />
+            Historial de cargas
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {!selectedClient ? (
+            <p className="text-sm text-muted-foreground">
+              Selecciona un cliente para ver su historial.
+            </p>
+          ) : uploadsLoading ? (
+            <div className="flex justify-center py-4">
+              <Spinner />
+            </div>
+          ) : uploads.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              No hay cargas aún para este cliente.
+            </p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b text-left text-muted-foreground">
+                    <th className="pb-2 pr-4 font-medium">Tipo</th>
+                    <th className="pb-2 pr-4 font-medium">Período</th>
+                    <th className="pb-2 pr-4 font-medium">Archivo</th>
+                    <th className="pb-2 pr-4 font-medium text-right">Filas</th>
+                    <th className="pb-2 font-medium">Subido el</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {uploads.map((u) => (
+                    <tr key={u.id} className="border-b last:border-0">
+                      <td className="py-2 pr-4">
+                        {TABLE_LABELS[u.table_type] ?? u.table_type}
+                      </td>
+                      <td className="py-2 pr-4 text-muted-foreground">
+                        {u.period_date ?? "—"}
+                      </td>
+                      <td className="py-2 pr-4 text-muted-foreground max-w-[160px] truncate">
+                        {u.filename}
+                      </td>
+                      <td className="py-2 pr-4 text-right">
+                        {u.rows_processed}
+                      </td>
+                      <td className="py-2 text-muted-foreground whitespace-nowrap">
+                        {formatDate(u.created_at)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </CardContent>
