@@ -2,10 +2,11 @@ import { useState, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/auth-context";
 import { useClient } from "@/contexts/client-context";
+import { useTheme } from "@/contexts/theme-context";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import CreateClientDialog from "@/components/create-client-dialog";
-import { Search, LogOut } from "lucide-react";
+import { Search, LogOut, Sun, Moon } from "lucide-react";
 import type { Client } from "@/types";
 
 const navItems = [
@@ -19,6 +20,7 @@ export default function AppSidebar() {
   const { user, logout } = useAuth();
   const { clients, clientsLoading, selectedClient, setSelectedClient } =
     useClient();
+  const { actualTheme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const [search, setSearch] = useState("");
@@ -77,10 +79,11 @@ export default function AppSidebar() {
                 <button
                   key={client.id}
                   onClick={() => handleSelect(client)}
-                  className={`flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-left text-sm transition-colors ${selectedClient?.id === client.id
-                    ? "bg-muted font-medium"
-                    : "text-sidebar-foreground hover:bg-muted"
-                    }`}
+                  className={`flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-left text-sm transition-colors ${
+                    selectedClient?.id === client.id
+                      ? "bg-muted font-medium"
+                      : "text-sidebar-foreground hover:bg-muted"
+                  }`}
                 >
                   <span className="truncate">{client.name}</span>
                 </button>
@@ -96,10 +99,11 @@ export default function AppSidebar() {
               <button
                 key={item.path}
                 onClick={() => navigate(item.path)}
-                className={`flex w-full items-center rounded-md px-3 py-1.5 text-left text-sm transition-colors ${isActive
-                  ? "bg-muted font-medium"
-                  : "text-sidebar-foreground hover:bg-muted"
-                  }`}
+                className={`flex w-full items-center rounded-md px-3 py-1.5 text-left text-sm transition-colors ${
+                  isActive
+                    ? "bg-muted font-medium"
+                    : "text-sidebar-foreground hover:bg-muted"
+                }`}
               >
                 {item.label}
               </button>
@@ -109,6 +113,17 @@ export default function AppSidebar() {
       </div>
 
       <div className="border-border border-t px-3 py-3 space-y-1">
+        <button
+          onClick={toggleTheme}
+          className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-sm text-sidebar-foreground hover:bg-muted transition-colors"
+        >
+          {actualTheme === "dark" ? (
+            <Sun className="size-3.5" />
+          ) : (
+            <Moon className="size-3.5" />
+          )}
+          {actualTheme === "dark" ? "Modo claro" : "Modo oscuro"}
+        </button>
         <div className="px-3 py-1 text-xs text-muted-foreground truncate">
           {user?.name}
         </div>

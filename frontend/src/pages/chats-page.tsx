@@ -143,11 +143,14 @@ export default function ChatsPage() {
       setMessages((prev) =>
         prev.map((m) =>
           m.id === assistantId && isAssistant(m)
-                ? {
-                    ...m,
-                    branches: [...m.branches, { branchId, content: "", thinking: "", thinkingDone: false }],
-                    currentBranch: m.branches.length,
-                  }
+            ? {
+                ...m,
+                branches: [
+                  ...m.branches,
+                  { branchId, content: "", thinking: "", thinkingDone: false },
+                ],
+                currentBranch: m.branches.length,
+              }
             : m,
         ),
       );
@@ -155,7 +158,14 @@ export default function ChatsPage() {
       const msg: AssistantMessageData = {
         id: targetId,
         role: "assistant",
-        branches: [{ branchId: nextBranchId++, content: "", thinking: "", thinkingDone: false }],
+        branches: [
+          {
+            branchId: nextBranchId++,
+            content: "",
+            thinking: "",
+            thinkingDone: false,
+          },
+        ],
         currentBranch: 0,
       };
       setMessages((prev) => [...prev, msg]);
@@ -193,11 +203,17 @@ export default function ChatsPage() {
         debug("waiting for stream chunk");
         const { done, value } = await reader.read();
         if (done) {
-          debug("stream done", { totalChunks: chunkCount, finalContentLength: content.length });
+          debug("stream done", {
+            totalChunks: chunkCount,
+            finalContentLength: content.length,
+          });
           break;
         }
         chunkCount++;
-        debug("chunk received", { chunkSize: value?.byteLength ?? 0, chunkCount });
+        debug("chunk received", {
+          chunkSize: value?.byteLength ?? 0,
+          chunkCount,
+        });
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split("\n");
@@ -225,7 +241,12 @@ export default function ChatsPage() {
                   if (m.id !== targetId || !isAssistant(m)) return m;
                   const branches = m.branches.map((b, i) =>
                     i === m.branches.length - 1
-                      ? { branchId: b.branchId, content, thinking, thinkingDone }
+                      ? {
+                          branchId: b.branchId,
+                          content,
+                          thinking,
+                          thinkingDone,
+                        }
                       : b,
                   );
                   return { ...m, branches };
@@ -261,7 +282,10 @@ export default function ChatsPage() {
         }
         return;
       }
-      debug("request error", { error: err instanceof Error ? err.message : String(err), phase: requestPhase });
+      debug("request error", {
+        error: err instanceof Error ? err.message : String(err),
+        phase: requestPhase,
+      });
       setMessages((prev) =>
         prev.map((m) => {
           if (m.id !== targetId || !isAssistant(m)) return m;
@@ -269,10 +293,10 @@ export default function ChatsPage() {
             i === m.branches.length - 1
               ? {
                   branchId: b.branchId,
-                      content:
-                        "Ocurrió un error al obtener respuesta. Intenta de nuevo.",
-                      thinking,
-                      thinkingDone,
+                  content:
+                    "Ocurrió un error al obtener respuesta. Intenta de nuevo.",
+                  thinking,
+                  thinkingDone,
                 }
               : b,
           );
@@ -330,7 +354,9 @@ export default function ChatsPage() {
         <ScrollContent>
           {messages.map((msg, idx) => {
             const isLatest = idx === messages.length - 1;
-            const hoverClass = !isLatest ? "opacity-0 group-hover:opacity-100 transition-opacity" : "";
+            const hoverClass = !isLatest
+              ? "opacity-0 group-hover:opacity-100 transition-opacity"
+              : "";
             return msg.role === "user" ? (
               <Message key={msg.id} from="user">
                 <MessageContent>{msg.content}</MessageContent>
@@ -355,9 +381,15 @@ export default function ChatsPage() {
                       {msg.branches.map((branch) => (
                         <span key={branch.branchId}>
                           {branch.thinking && (
-                            <Reasoning className="w-full" isStreaming={loading && !branch.thinkingDone} defaultOpen={false}>
+                            <Reasoning
+                              className="w-full"
+                              isStreaming={loading && !branch.thinkingDone}
+                              defaultOpen={false}
+                            >
                               <ReasoningTrigger />
-                              <ReasoningContent>{branch.thinking}</ReasoningContent>
+                              <ReasoningContent>
+                                {branch.thinking}
+                              </ReasoningContent>
                             </Reasoning>
                           )}
                           {branch.content ? (
@@ -396,7 +428,7 @@ export default function ChatsPage() {
                   </MessageAction>
                 </MessageActions>
               </Message>
-            )
+            );
           })}
         </ScrollContent>
         <ConversationScrollButton />
