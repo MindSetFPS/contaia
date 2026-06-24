@@ -10,6 +10,7 @@ import type { Client } from "@/types";
 
 const navItems = [
   { label: "Dashboard", path: "/dashboard" },
+  { label: "Subir datos", path: "/upload" },
   { label: "Mi Perfil", path: "/me" },
 ];
 

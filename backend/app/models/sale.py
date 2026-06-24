@@ -10,7 +10,7 @@ class Sale(SQLModel, table=True):
     accountant_id: int = Field(foreign_key="accountants.id", nullable=False)
     client_id: int = Field(foreign_key="clients.id", nullable=False)
     fecha: date = Field(nullable=False)
-    cliente_nombre: str = Field(nullable=False)
+    cliente_nombre: str | None = Field(default=None)
     producto: str = Field(nullable=False)
     cantidad: float = Field(default=1)
     precio_unitario: float | None = None
