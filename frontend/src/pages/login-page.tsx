@@ -38,7 +38,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4 dark:from-gray-900 dark:to-gray-950">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Iniciar Sesión</CardTitle>
@@ -69,7 +69,7 @@ export default function LoginPage() {
               />
             </div>
             {error && (
-              <p className="text-sm text-red-600">{error}</p>
+              <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
             )}
             <Button type="submit" className="w-full" disabled={submitting}>
               {submitting ? "Ingresando..." : "Iniciar Sesión"}
@@ -77,7 +77,10 @@ export default function LoginPage() {
           </form>
           <p className="mt-4 text-center text-sm text-muted-foreground">
             ¿No tienes cuenta?{" "}
-            <Link to="/register" className="text-primary underline-offset-4 hover:underline">
+            <Link
+              to="/register"
+              className="text-primary underline-offset-4 hover:underline"
+            >
               Regístrate
             </Link>
           </p>

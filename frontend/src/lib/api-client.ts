@@ -15,7 +15,8 @@ export async function apiRequest<T>(
   const res = await fetch(`${BASE_URL}${path}`, {
     method,
     headers,
-    body: body instanceof FormData ? body : body ? JSON.stringify(body) : undefined,
+    body:
+      body instanceof FormData ? body : body ? JSON.stringify(body) : undefined,
   });
 
   if (!res.ok) {

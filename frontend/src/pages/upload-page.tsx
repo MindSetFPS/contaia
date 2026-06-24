@@ -149,7 +149,7 @@ export default function UploadPage() {
               <span className="font-medium">{selectedClient.name}</span>
             </div>
           ) : (
-            <div className="rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-800 flex items-center gap-2">
+            <div className="rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-800 flex items-center gap-2 dark:bg-amber-950 dark:text-amber-200">
               <AlertCircle className="size-4" />
               Selecciona un cliente del menú lateral antes de subir datos.
             </div>
@@ -177,7 +177,7 @@ export default function UploadPage() {
                 type="file"
                 accept=".xlsx"
                 onChange={handleFileChange}
-                className="file:cursor-pointer file:border-0 file:rounded file:bg-gray-100 file:px-3 file:py-1 file:text-xs hover:file:bg-primary/10"
+                className="file:cursor-pointer file:border-0 file:rounded file:bg-gray-100 file:px-3 file:py-1 file:text-xs hover:file:bg-primary/10 dark:file:bg-gray-800"
               />
             </div>
             {file && (
@@ -207,7 +207,7 @@ export default function UploadPage() {
           </Button>
 
           {status === "success" && result && (
-            <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-800 space-y-1">
+            <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-800 space-y-1 dark:border-green-800 dark:bg-green-950 dark:text-green-200">
               <p className="flex items-center gap-2 font-medium">
                 <CheckCircle className="size-4" />
                 Datos subidos correctamente
@@ -224,7 +224,7 @@ export default function UploadPage() {
           )}
 
           {status === "error" && (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800 flex items-start gap-2">
+            <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800 flex items-start gap-2 dark:border-red-800 dark:bg-red-950 dark:text-red-200">
               <AlertCircle className="mt-0.5 size-4 shrink-0" />
               <span>{error}</span>
             </div>
@@ -266,7 +266,10 @@ export default function UploadPage() {
                 </thead>
                 <tbody>
                   {uploads.map((u) => (
-                    <tr key={u.id} className="border-border border-b last:border-0">
+                    <tr
+                      key={u.id}
+                      className="border-border border-b last:border-0"
+                    >
                       <td className="py-2 pr-4">
                         {TABLE_LABELS[u.table_type] ?? u.table_type}
                       </td>

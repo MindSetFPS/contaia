@@ -43,7 +43,11 @@ export default function ProfilePage() {
           <CardDescription>Tus datos de cuenta</CardDescription>
         </CardHeader>
         <CardContent>
-          {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
+          {error && (
+            <p className="mb-4 text-sm text-red-600 dark:text-red-400">
+              {error}
+            </p>
+          )}
           {profile && (
             <dl className="space-y-4">
               <div>

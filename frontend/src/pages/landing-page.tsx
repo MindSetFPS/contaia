@@ -60,7 +60,7 @@ export default function LandingPage() {
   return (
     <div className="flex min-h-screen flex-col">
       {/* Navbar */}
-      <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/80 backdrop-blur">
+      <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/80 backdrop-blur dark:border-gray-800 dark:bg-gray-950/80">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
           <span className="text-xl font-bold text-primary">ContaIA</span>
           <nav className="flex items-center gap-3">
@@ -86,8 +86,8 @@ export default function LandingPage() {
               Tu contabilidad en lenguaje natural
             </h1>
             <p className="mx-auto mt-4 max-w-2xl text-lg text-blue-100">
-              Sube tus estados financieros y haz preguntas como si hablaras con tu
-              contador. Obtén KPIs, insights y dashboard al instante.
+              Sube tus estados financieros y haz preguntas como si hablaras con
+              tu contador. Obtén KPIs, insights y dashboard al instante.
             </p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
               <Link to="/register">
@@ -109,40 +109,44 @@ export default function LandingPage() {
             </div>
             <div className="mt-10 flex flex-wrap items-center justify-center gap-8 text-sm text-blue-200">
               <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="h-4 w-4 text-green-300" /> Sin instalación
+                <CheckCircle2 className="h-4 w-4 text-green-300" /> Sin
+                instalación
               </span>
               <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="h-4 w-4 text-green-300" /> No requiere SQL
+                <CheckCircle2 className="h-4 w-4 text-green-300" /> No requiere
+                SQL
               </span>
               <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="h-4 w-4 text-green-300" /> Datos seguros
+                <CheckCircle2 className="h-4 w-4 text-green-300" /> Datos
+                seguros
               </span>
             </div>
           </div>
         </section>
 
         {/* Features */}
-        <section className="bg-white px-6 py-20">
+        <section className="bg-white px-6 py-20 dark:bg-gray-950">
           <div className="mx-auto max-w-6xl">
-            <h2 className="text-center text-3xl font-bold tracking-tight text-gray-900">
+            <h2 className="text-center text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
               Todo lo que necesitas en un solo lugar
             </h2>
-            <p className="mx-auto mt-2 max-w-xl text-center text-gray-500">
-              Desde la carga de datos hasta el análisis, ContaIA simplifica cada paso.
+            <p className="mx-auto mt-2 max-w-xl text-center text-gray-500 dark:text-gray-400">
+              Desde la carga de datos hasta el análisis, ContaIA simplifica cada
+              paso.
             </p>
             <div className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
               {features.map((f) => (
                 <div
                   key={f.title}
-                  className="group rounded-xl border border-gray-200 p-6 transition hover:border-primary/30 hover:shadow-lg"
+                  className="group rounded-xl border border-gray-200 p-6 transition hover:border-primary/30 hover:shadow-lg dark:border-gray-800"
                 >
-                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100 text-primary">
+                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100 text-primary dark:bg-blue-900/30">
                     <f.icon className="h-6 w-6" />
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                     {f.title}
                   </h3>
-                  <p className="mt-2 text-sm leading-relaxed text-gray-500">
+                  <p className="mt-2 text-sm leading-relaxed text-gray-500 dark:text-gray-400">
                     {f.desc}
                   </p>
                 </div>
@@ -152,12 +156,12 @@ export default function LandingPage() {
         </section>
 
         {/* How it works */}
-        <section className="bg-gray-50 px-6 py-20">
+        <section className="bg-gray-50 px-6 py-20 dark:bg-gray-900">
           <div className="mx-auto max-w-4xl">
-            <h2 className="text-center text-3xl font-bold tracking-tight text-gray-900">
+            <h2 className="text-center text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
               Cómo funciona
             </h2>
-            <p className="mx-auto mt-2 max-w-xl text-center text-gray-500">
+            <p className="mx-auto mt-2 max-w-xl text-center text-gray-500 dark:text-gray-400">
               Tres pasos para transformar tus números en decisiones.
             </p>
             <div className="mt-12 grid gap-8 md:grid-cols-3">
@@ -166,10 +170,12 @@ export default function LandingPage() {
                   <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary text-xl font-bold text-white">
                     {s.step}
                   </div>
-                  <h3 className="mt-4 text-lg font-semibold text-gray-900">
+                  <h3 className="mt-4 text-lg font-semibold text-gray-900 dark:text-gray-100">
                     {s.title}
                   </h3>
-                  <p className="mt-2 text-sm text-gray-500">{s.desc}</p>
+                  <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                    {s.desc}
+                  </p>
                 </div>
               ))}
             </div>
@@ -177,19 +183,25 @@ export default function LandingPage() {
         </section>
 
         {/* Stats */}
-        <section className="bg-white px-6 py-16">
+        <section className="bg-white px-6 py-16 dark:bg-gray-950">
           <div className="mx-auto flex max-w-4xl flex-wrap justify-center gap-12 text-center">
             <div>
               <div className="text-3xl font-bold text-primary">100+</div>
-              <div className="mt-1 text-sm text-gray-500">Contadores activos</div>
+              <div className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                Contadores activos
+              </div>
             </div>
             <div>
               <div className="text-3xl font-bold text-primary">10K+</div>
-              <div className="mt-1 text-sm text-gray-500">Facturas procesadas</div>
+              <div className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                Facturas procesadas
+              </div>
             </div>
             <div>
               <div className="text-3xl font-bold text-primary">5 min</div>
-              <div className="mt-1 text-sm text-gray-500">En poner tu cuenta al día</div>
+              <div className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                En poner tu cuenta al día
+              </div>
             </div>
           </div>
         </section>
@@ -217,10 +229,15 @@ export default function LandingPage() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-gray-200 bg-white px-6 py-8">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 text-sm text-gray-500 sm:flex-row">
-          <span className="font-semibold text-gray-900">ContaIA</span>
-          <p>&copy; {new Date().getFullYear()} ContaIA. Todos los derechos reservados.</p>
+      <footer className="border-t border-gray-200 bg-white px-6 py-8 dark:border-gray-800 dark:bg-gray-950">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 text-sm text-gray-500 dark:text-gray-400 sm:flex-row">
+          <span className="font-semibold text-gray-900 dark:text-gray-100">
+            ContaIA
+          </span>
+          <p>
+            &copy; {new Date().getFullYear()} ContaIA. Todos los derechos
+            reservados.
+          </p>
         </div>
       </footer>
     </div>
