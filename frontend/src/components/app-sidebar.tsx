@@ -10,6 +10,7 @@ import type { Client } from "@/types";
 
 const navItems = [
   { label: "Dashboard", path: "/dashboard" },
+  { label: "Chats", path: "/chats" },
   { label: "Subir datos", path: "/upload" },
   { label: "Mi Perfil", path: "/me" },
 ];
@@ -38,13 +39,13 @@ export default function AppSidebar() {
   }
 
   return (
-    <aside className="flex w-64 flex-col border-r bg-sidebar text-sidebar-foreground min-h-screen">
-      <div className="border-b px-4 py-3">
+    <aside className="flex w-64 flex-col border-border border bg-sidebar text-sidebar-foreground min-h-screen">
+      <div className="border-border border-b px-4 py-3">
         <span className="text-sm font-semibold">ContaIA</span>
       </div>
 
       <div className="flex flex-1 flex-col overflow-hidden">
-        <div className="border-b px-3 py-3">
+        <div className="border-border border-b px-3 py-3">
           <div className="mb-2 flex items-center justify-between px-1">
             <span className="text-xs font-medium text-muted-foreground">
               Clientes
@@ -76,11 +77,10 @@ export default function AppSidebar() {
                 <button
                   key={client.id}
                   onClick={() => handleSelect(client)}
-                  className={`flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-left text-sm transition-colors ${
-                    selectedClient?.id === client.id
-                      ? "bg-muted font-medium"
-                      : "text-sidebar-foreground hover:bg-muted"
-                  }`}
+                  className={`flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-left text-sm transition-colors ${selectedClient?.id === client.id
+                    ? "bg-muted font-medium"
+                    : "text-sidebar-foreground hover:bg-muted"
+                    }`}
                 >
                   <span className="truncate">{client.name}</span>
                 </button>
@@ -96,11 +96,10 @@ export default function AppSidebar() {
               <button
                 key={item.path}
                 onClick={() => navigate(item.path)}
-                className={`flex w-full items-center rounded-md px-3 py-1.5 text-left text-sm transition-colors ${
-                  isActive
-                    ? "bg-muted font-medium"
-                    : "text-sidebar-foreground hover:bg-muted"
-                }`}
+                className={`flex w-full items-center rounded-md px-3 py-1.5 text-left text-sm transition-colors ${isActive
+                  ? "bg-muted font-medium"
+                  : "text-sidebar-foreground hover:bg-muted"
+                  }`}
               >
                 {item.label}
               </button>
@@ -109,7 +108,7 @@ export default function AppSidebar() {
         </nav>
       </div>
 
-      <div className="border-t px-3 py-3 space-y-1">
+      <div className="border-border border-t px-3 py-3 space-y-1">
         <div className="px-3 py-1 text-xs text-muted-foreground truncate">
           {user?.name}
         </div>
