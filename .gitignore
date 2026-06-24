@@ -29,6 +29,7 @@ Thumbs.db
 
 # Build
 frontend/dist/
+frontend/.agents
 
 # Docker
 docker-data/

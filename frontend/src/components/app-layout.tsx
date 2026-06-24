@@ -11,10 +11,10 @@ export default function AppLayout() {
   if (!token) return <Navigate to="/login" replace />;
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex h-screen bg-background text-foreground font-sans overflow-hidden">
       <AppSidebar />
       <div className="flex flex-1 flex-col">
-        <header className="flex h-10 items-center justify-between border-b px-4 text-sm text-muted-foreground">
+        <header className="flex h-10 items-center justify-between border-border border-b px-4 text-sm text-muted-foreground">
           <span>
             {selectedClient ? (
               <>
@@ -28,11 +28,11 @@ export default function AppLayout() {
             )}
           </span>
         </header>
-        <main className="flex-1 overflow-auto">
+        <main className="flex flex-1 flex-col overflow-hidden h-0">
           {selectedClient ? (
             <Outlet />
           ) : (
-            <div className="flex h-full items-center justify-center">
+            <div className="flex flex-1 items-center justify-center">
               <p className="text-sm text-muted-foreground">
                 Selecciona un cliente del menú lateral para comenzar
               </p>
