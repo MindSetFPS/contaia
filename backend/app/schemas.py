@@ -29,6 +29,7 @@ class ChatRequest(BaseModel):
     conversation_id: int | None = None
     message: str
     history: list[dict] = []
+    stream: bool = True
 
 
 class ChatResponse(BaseModel):

@@ -256,7 +256,7 @@ export default function UploadPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b text-left text-muted-foreground">
+                  <tr className="border-border border-b text-left text-muted-foreground">
                     <th className="pb-2 pr-4 font-medium">Tipo</th>
                     <th className="pb-2 pr-4 font-medium">Período</th>
                     <th className="pb-2 pr-4 font-medium">Archivo</th>
@@ -266,7 +266,7 @@ export default function UploadPage() {
                 </thead>
                 <tbody>
                   {uploads.map((u) => (
-                    <tr key={u.id} className="border-b last:border-0">
+                    <tr key={u.id} className="border-border border-b last:border-0">
                       <td className="py-2 pr-4">
                         {TABLE_LABELS[u.table_type] ?? u.table_type}
                       </td>
