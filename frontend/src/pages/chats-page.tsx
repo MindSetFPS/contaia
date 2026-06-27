@@ -457,7 +457,7 @@ export default function ChatsPage() {
         <ConversationScrollButton />
       </Conversation>
 
-      <div className="p-3">
+      <div className="p-2 sm:p-3">
         <PromptInput
           onSubmit={async (message) => {
             await handleSubmit(message.text);

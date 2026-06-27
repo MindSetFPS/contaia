@@ -96,8 +96,9 @@ const AttachmentItem = memo(({ attachment, onRemove }: AttachmentItemProps) => {
         () => onRemove(attachment.id),
         [onRemove, attachment.id]
     );
+    const safeAttachment = { ...attachment, mediaType: attachment.mediaType ?? "application/octet-stream" };
     return (
-        <Attachment data={attachment} key={attachment.id} onRemove={handleRemove}>
+        <Attachment data={safeAttachment} key={attachment.id} onRemove={handleRemove}>
             <AttachmentPreview />
             <AttachmentRemove />
         </Attachment>
@@ -160,7 +161,7 @@ const PromptInputAttachmentsDisplay = () => {
 };
 
 const Example = () => {
-    const [model, setModel] = useState<string>(models[0].id);
+    const [model, setModel] = useState<string>(models[0]!.id);
     const [modelSelectorOpen, setModelSelectorOpen] = useState(false);
     const [status, setStatus] = useState<
         "submitted" | "streaming" | "ready" | "error"

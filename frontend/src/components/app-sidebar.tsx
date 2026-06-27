@@ -16,7 +16,7 @@ const navItems = [
   { label: "Mi Perfil", path: "/me" },
 ];
 
-export default function AppSidebar() {
+export default function AppSidebar({ onClose }: { onClose?: () => void }) {
   const { user, logout } = useAuth();
   const { clients, clientsLoading, selectedClient, setSelectedClient } =
     useClient();
@@ -38,10 +38,11 @@ export default function AppSidebar() {
   function handleSelect(client: Client) {
     setSelectedClient(client);
     navigate("/dashboard");
+    onClose?.();
   }
 
   return (
-    <aside className="flex w-64 flex-col border-border border bg-sidebar text-sidebar-foreground min-h-screen">
+    <aside className="flex w-64 flex-col border-border md:border bg-sidebar text-sidebar-foreground min-h-screen">
       <div className="border-border border-b px-4 py-3">
         <span className="text-sm font-semibold">ContaIA</span>
       </div>
@@ -79,11 +80,10 @@ export default function AppSidebar() {
                 <button
                   key={client.id}
                   onClick={() => handleSelect(client)}
-                  className={`flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-left text-sm transition-colors ${
-                    selectedClient?.id === client.id
+                  className={`flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-left text-sm transition-colors ${selectedClient?.id === client.id
                       ? "bg-muted font-medium"
                       : "text-sidebar-foreground hover:bg-muted"
-                  }`}
+                    }`}
                 >
                   <span className="truncate">{client.name}</span>
                 </button>
@@ -98,12 +98,11 @@ export default function AppSidebar() {
             return (
               <button
                 key={item.path}
-                onClick={() => navigate(item.path)}
-                className={`flex w-full items-center rounded-md px-3 py-1.5 text-left text-sm transition-colors ${
-                  isActive
+                onClick={() => { navigate(item.path); onClose?.(); }}
+                className={`flex w-full items-center rounded-md px-3 py-1.5 text-left text-sm transition-colors ${isActive
                     ? "bg-muted font-medium"
                     : "text-sidebar-foreground hover:bg-muted"
-                }`}
+                  }`}
               >
                 {item.label}
               </button>

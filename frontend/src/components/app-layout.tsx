@@ -1,20 +1,42 @@
+import { useState } from "react";
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "@/contexts/auth-context";
 import { useClient } from "@/contexts/client-context";
 import AppSidebar from "@/components/app-sidebar";
+import {
+  Sheet,
+  SheetContent,
+} from "@/components/ui/sheet";
+import { Menu } from "lucide-react";
 
 export default function AppLayout() {
   const { token, loading } = useAuth();
   const { selectedClient } = useClient();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   if (loading) return null;
   if (!token) return <Navigate to="/login" replace />;
 
   return (
     <div className="flex h-screen bg-background text-foreground font-sans overflow-hidden">
-      <AppSidebar />
-      <div className="flex flex-1 flex-col">
-        <header className="flex h-10 items-center justify-between border-border border-b px-4 text-sm text-muted-foreground">
+      <div className="hidden md:flex">
+        <AppSidebar />
+      </div>
+
+      <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+        <SheetContent>
+          <AppSidebar onClose={() => setSidebarOpen(false)} />
+        </SheetContent>
+      </Sheet>
+
+      <div className="flex flex-1 flex-col min-w-0">
+        <header className="flex h-10 items-center justify-between border-border border-b px-2 sm:px-4 text-sm text-muted-foreground">
+          <button
+            className="flex md:hidden size-7 items-center justify-center rounded-md hover:bg-muted transition-colors -ml-1"
+            onClick={() => setSidebarOpen(true)}
+          >
+            <Menu className="size-4" />
+          </button>
           <span>
             {selectedClient ? (
               <>
@@ -27,13 +49,14 @@ export default function AppLayout() {
               "Cliente: No seleccionado"
             )}
           </span>
+          <div className="flex-1" />
         </header>
         <main className="flex flex-1 flex-col overflow-hidden h-0">
           {selectedClient ? (
             <Outlet />
           ) : (
-            <div className="flex flex-1 items-center justify-center">
-              <p className="text-sm text-muted-foreground">
+            <div className="flex flex-1 items-center justify-center px-4">
+              <p className="text-sm text-muted-foreground text-center">
                 Selecciona un cliente del menú lateral para comenzar
               </p>
             </div>
