@@ -19,9 +19,8 @@ Si no tienes los datos para responder, indícalo claramente.
 
 Tienes acceso a las siguientes herramientas:
 - `get_schema`: consulta la estructura de la base de datos. Úsala para conocer las tablas y columnas disponibles antes de escribir SQL.
-- `execute_sql`: ejecuta consultas SQL de solo lectura. En tu SQL puedes usar `:accountant_id` y `:client_id` como parámetros nombrados — el sistema los reemplazará automáticamente con los valores correctos del contador y cliente autenticados. Todas las tablas tienen columnas `accountant_id` y `client_id`. No escribas valores literales para estos campos."""
-
-# - `generate_chart`: ejecuta una consulta SQL de resumen y genera una configuración de gráfico JSON. La primera columna del resultado se usa como etiquetas y las siguientes como datos numéricos. Úsala cuando necesites visualizar datos."""
+- `execute_sql`: ejecuta consultas SQL de solo lectura. En tu SQL puedes usar `:accountant_id` y `:client_id` como parámetros nombrados — el sistema los reemplazará automáticamente con los valores correctos del contador y cliente autenticados. Todas las tablas tienen columnas `accountant_id` y `client_id`. No escribas valores literales para estos campos.
+- `generate_chart`: ejecuta una consulta SQL de resumen y genera una configuración de gráfico JSON. La primera columna del resultado se usa como etiquetas y las siguientes como datos numéricos. Úsala cuando necesites visualizar datos."""
 
 def build_messages(body: ChatRequest) -> list[dict]:
     messages = [{"role": "system", "content": SYSTEM_PROMPT}]
@@ -46,15 +45,15 @@ def chat(
         return _stream_response(messages, session, user.id, body.client_id)
 
     try:
-        answer = agent_loop(messages, session, user.id, body.client_id)
-        print(f"[chat] answer len={len(answer)}", flush=True)
+        answer, chart_config = agent_loop(messages, session, user.id, body.client_id)
+        print(f"[chat] answer len={len(answer)} chart_config={chart_config is not None}", flush=True)
     except Exception as e:
         print(f"[chat] ERROR: {e}", flush=True)
         raise HTTPException(status_code=502, detail=str(e))
 
     return ChatResponse(
         answer_text=answer,
-        chart_config=None,
+        chart_config=chart_config,
     )
 
 
@@ -63,10 +62,12 @@ def _stream_response(messages: list[dict], session: Session, accountant_id: int,
         try:
             for chunk in get_completion_stream(messages, session, accountant_id, client_id, options={"temperature": 0.7, "num_ctx": 65536}):
                 data = {}
-                if chunk["content"]:
+                if chunk.get("content"):
                     data["content"] = chunk["content"]
-                if chunk["thinking"]:
+                if chunk.get("thinking"):
                     data["thinking"] = chunk["thinking"]
+                if chunk.get("chart_config"):
+                    data["chart_config"] = chunk["chart_config"]
                 if data:
                     yield f"data: {json.dumps(data)}\n\n"
         except Exception:

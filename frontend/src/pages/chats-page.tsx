@@ -1,6 +1,8 @@
 import { useState, useRef } from "react";
 import { useClient } from "@/contexts/client-context";
 import { useAuth } from "@/contexts/auth-context";
+import type { ChartConfig } from "@/types";
+import ChartRenderer from "@/components/chart-renderer";
 import {
   PromptInput,
   PromptInputTextarea,
@@ -39,6 +41,7 @@ type Branch = {
   content: string;
   thinking: string;
   thinkingDone: boolean;
+  chartConfig?: ChartConfig;
 };
 
 type MessageData = {
@@ -120,6 +123,7 @@ export default function ChatsPage() {
     let content = "";
     let thinking = "";
     let thinkingDone = false;
+    let chartConfig: ChartConfig | undefined;
     let isTimeout = false;
     let requestPhase = "initializing";
 
@@ -136,7 +140,7 @@ export default function ChatsPage() {
       isTimeout = true;
       debug("timeout fired — aborting");
       abortRef.current?.abort();
-    }, 120_000);
+    }, 800_000);
 
     if (assistantId !== null) {
       const branchId = nextBranchId++;
@@ -144,13 +148,19 @@ export default function ChatsPage() {
         prev.map((m) =>
           m.id === assistantId && isAssistant(m)
             ? {
-                ...m,
-                branches: [
-                  ...m.branches,
-                  { branchId, content: "", thinking: "", thinkingDone: false },
-                ],
-                currentBranch: m.branches.length,
-              }
+              ...m,
+              branches: [
+                ...m.branches,
+                {
+                  branchId,
+                  content: "",
+                  thinking: "",
+                  thinkingDone: false,
+                  chartConfig: undefined,
+                },
+              ],
+              currentBranch: m.branches.length,
+            }
             : m,
         ),
       );
@@ -235,18 +245,22 @@ export default function ChatsPage() {
               thinkingDone = true;
               content += parsed.content;
             }
-            if (parsed.thinking || parsed.content) {
+            if (parsed.chart_config) {
+              chartConfig = parsed.chart_config;
+            }
+            if (parsed.thinking || parsed.content || parsed.chart_config) {
               setMessages((prev) =>
                 prev.map((m) => {
                   if (m.id !== targetId || !isAssistant(m)) return m;
                   const branches = m.branches.map((b, i) =>
                     i === m.branches.length - 1
                       ? {
-                          branchId: b.branchId,
-                          content,
-                          thinking,
-                          thinkingDone,
-                        }
+                        branchId: b.branchId,
+                        content,
+                        thinking,
+                        thinkingDone,
+                        chartConfig,
+                      }
                       : b,
                   );
                   return { ...m, branches };
@@ -268,12 +282,13 @@ export default function ChatsPage() {
               const branches = m.branches.map((b, i) =>
                 i === m.branches.length - 1
                   ? {
-                      branchId: b.branchId,
-                      content:
-                        "La respuesta está tardando demasiado. Intenta de nuevo.",
-                      thinking,
-                      thinkingDone,
-                    }
+                    branchId: b.branchId,
+                    content:
+                      "La respuesta está tardando demasiado. Intenta de nuevo.",
+                    thinking,
+                    thinkingDone,
+                    chartConfig,
+                  }
                   : b,
               );
               return { ...m, branches };
@@ -292,12 +307,13 @@ export default function ChatsPage() {
           const branches = m.branches.map((b, i) =>
             i === m.branches.length - 1
               ? {
-                  branchId: b.branchId,
-                  content:
-                    "Ocurrió un error al obtener respuesta. Intenta de nuevo.",
-                  thinking,
-                  thinkingDone,
-                }
+                branchId: b.branchId,
+                content:
+                  "Ocurrió un error al obtener respuesta. Intenta de nuevo.",
+                thinking,
+                thinkingDone,
+                chartConfig,
+              }
               : b,
           );
           return { ...m, branches };
@@ -393,7 +409,14 @@ export default function ChatsPage() {
                             </Reasoning>
                           )}
                           {branch.content ? (
-                            <MessageResponse>{branch.content}</MessageResponse>
+                            <>
+                              <MessageResponse>
+                                {branch.content}
+                              </MessageResponse>
+                              {branch.chartConfig && (
+                                <ChartRenderer config={branch.chartConfig} />
+                              )}
+                            </>
                           ) : (
                             <span className="inline-flex">
                               <span className="animate-pulse">▊</span>
