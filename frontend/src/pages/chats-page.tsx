@@ -84,7 +84,7 @@ function ScrollContent({ children }: { children: React.ReactNode }) {
   const { scrollRef, contentRef } = useStickToBottomContext();
   return (
     <div ref={scrollRef} className="h-full w-full overflow-y-auto">
-      <div ref={contentRef} className="flex flex-col gap-8 p-4">
+      <div ref={contentRef} className="mx-auto max-w-3xl flex flex-col gap-8 p-4">
         {children}
       </div>
     </div>
@@ -457,7 +457,7 @@ export default function ChatsPage() {
         <ConversationScrollButton />
       </Conversation>
 
-      <div className="p-2 sm:p-3">
+      <div className="mx-auto w-full max-w-3xl p-2 sm:p-3">
         <PromptInput
           onSubmit={async (message) => {
             await handleSubmit(message.text);

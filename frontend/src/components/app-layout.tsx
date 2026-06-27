@@ -18,7 +18,7 @@ export default function AppLayout() {
   if (!token) return <Navigate to="/login" replace />;
 
   return (
-    <div className="flex h-screen bg-background text-foreground font-sans overflow-hidden">
+    <div className="flex h-dvh bg-background text-foreground font-sans overflow-hidden">
       <div className="hidden md:flex">
         <AppSidebar />
       </div>
