@@ -12,7 +12,7 @@ export default function DashboardPage() {
   const { selectedClient } = useClient();
 
   return (
-    <div className="flex flex-1 items-center justify-center p-6">
+    <div className="flex flex-1 items-center justify-center p-4 sm:p-6">
       <Card className="w-full max-w-lg">
         <CardHeader>
           <CardTitle>Dashboard</CardTitle>

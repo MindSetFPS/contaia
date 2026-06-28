@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AuthProvider } from "./contexts/auth-context";
 import { ClientProvider } from "./contexts/client-context";
 import { ThemeProvider } from "./contexts/theme-context";
+import LandingPage from "./pages/landing-page";
 import LoginPage from "./pages/login-page";
 import RegisterPage from "./pages/register-page";
 import DashboardPage from "./pages/dashboard-page";
@@ -17,6 +18,7 @@ function App() {
         <AuthProvider>
           <ClientProvider>
             <Routes>
+              <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
               <Route element={<AppLayout />}>
@@ -24,10 +26,6 @@ function App() {
                 <Route path="/upload" element={<UploadPage />} />
                 <Route path="/chats" element={<ChatsPage />} />
                 <Route path="/me" element={<ProfilePage />} />
-                <Route
-                  path="/"
-                  element={<Navigate to="/dashboard" replace />}
-                />
               </Route>
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
