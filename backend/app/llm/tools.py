@@ -133,6 +133,7 @@ def execute_sql(session: Session, accountant_id: int, client_id: int, args: dict
         print(f"[execute_sql] raw output ({len(payload)} chars): {payload[:2000]}", flush=True)
         return payload
     except Exception as e:
+        session.rollback()
         payload = json.dumps({"error": str(e)}, ensure_ascii=False)
         print(f"[execute_sql] ERROR raw output: {payload}", flush=True)
         return payload
@@ -202,6 +203,7 @@ def generate_chart(session: Session, accountant_id: int, client_id: int, args: d
         print(f"{GREEN}[generate_chart] chart_config ({len(payload)} chars): {payload[:1000]}{RESET}", flush=True)
         return payload
     except Exception as e:
+        session.rollback()
         payload = json.dumps({"error": str(e)}, ensure_ascii=False)
         print(f"{RED}[generate_chart] ERROR: {payload}{RESET}", flush=True)
         return payload
