@@ -29,7 +29,7 @@ export default function AppSidebar({ onClose }: { onClose?: () => void }) {
 
   function handleSelect(client: Client) {
     setSelectedClient(client);
-    navigate("/app");
+    navigate(`/app/${client.id}/dashboard`);
     onClose?.();
   }
 
@@ -72,10 +72,11 @@ export default function AppSidebar({ onClose }: { onClose?: () => void }) {
                 <button
                   key={client.id}
                   onClick={() => handleSelect(client)}
-                  className={`flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-left text-sm transition-colors ${selectedClient?.id === client.id
+                  className={`flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-left text-sm transition-colors ${
+                    selectedClient?.id === client.id
                       ? "bg-muted font-medium"
                       : "text-sidebar-foreground hover:bg-muted"
-                    }`}
+                  }`}
                 >
                   <span className="truncate">{client.name}</span>
                 </button>
@@ -87,7 +88,10 @@ export default function AppSidebar({ onClose }: { onClose?: () => void }) {
 
       <div className="border-border border-t px-3 py-3 space-y-1">
         <button
-          onClick={() => { navigate("/app/me"); onClose?.(); }}
+          onClick={() => {
+            navigate("/app/me");
+            onClose?.();
+          }}
           className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-sm text-sidebar-foreground hover:bg-muted transition-colors"
         >
           <User className="size-3.5" />

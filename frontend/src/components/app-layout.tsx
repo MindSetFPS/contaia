@@ -1,21 +1,15 @@
 import { useState } from "react";
-import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "@/contexts/auth-context";
 import { useClient } from "@/contexts/client-context";
 import AppSidebar from "@/components/app-sidebar";
-import MainTabs from "@/components/main-tabs";
-import {
-  Sheet,
-  SheetContent,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Menu } from "lucide-react";
 
 export default function AppLayout() {
   const { token, loading } = useAuth();
   const { selectedClient } = useClient();
-  const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const isProfile = location.pathname === "/app/me";
 
   if (loading) return null;
   if (!token) return <Navigate to="/login" replace />;
@@ -55,17 +49,7 @@ export default function AppLayout() {
           <div className="flex-1" />
         </header>
         <main className="flex flex-1 flex-col overflow-hidden h-0">
-          {isProfile ? (
-            <Outlet />
-          ) : selectedClient ? (
-            <MainTabs />
-          ) : (
-            <div className="flex flex-1 items-center justify-center px-4">
-              <p className="text-sm text-muted-foreground text-center">
-                Selecciona un cliente del menú lateral para comenzar
-              </p>
-            </div>
-          )}
+          <Outlet />
         </main>
       </div>
     </div>

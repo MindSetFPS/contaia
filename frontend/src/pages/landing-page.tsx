@@ -69,13 +69,19 @@ export default function LandingPage() {
       {/* Navbar */}
       <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/80 backdrop-blur-md dark:border-gray-800 dark:bg-gray-950/80">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 sm:px-6 py-3">
-          <span className="text-lg sm:text-xl font-bold text-blue-600 dark:text-blue-400">ContaIA</span>
+          <span className="text-lg sm:text-xl font-bold text-blue-600 dark:text-blue-400">
+            ContaIA
+          </span>
           <nav className="flex items-center gap-2 sm:gap-3">
             <Link to="/login">
-              <Button variant="ghost" size="sm" className="sm:h-9 sm:px-4">Iniciar Sesión</Button>
+              <Button variant="ghost" size="sm" className="sm:h-9 sm:px-4">
+                Iniciar Sesión
+              </Button>
             </Link>
             <Link to="/register">
-              <Button size="sm" className="sm:h-9 sm:px-4">Registrarse</Button>
+              <Button size="sm" className="sm:h-9 sm:px-4">
+                Registrarse
+              </Button>
             </Link>
           </nav>
         </div>
@@ -92,7 +98,8 @@ export default function LandingPage() {
               Contabilidad impulsada por IA
             </span>
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-tight">
-              Tu contabilidad en<br />
+              Tu contabilidad en
+              <br />
               <span className="text-blue-200">lenguaje natural</span>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-base sm:text-lg text-blue-100/90 leading-relaxed">
@@ -120,13 +127,16 @@ export default function LandingPage() {
             </div>
             <div className="mt-12 sm:mt-16 flex flex-wrap items-center justify-center gap-6 sm:gap-10 text-xs sm:text-sm text-blue-200/80">
               <span className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-green-300 shrink-0" /> Sin instalación
+                <CheckCircle2 className="h-4 w-4 text-green-300 shrink-0" /> Sin
+                instalación
               </span>
               <span className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-green-300 shrink-0" /> No requiere SQL
+                <CheckCircle2 className="h-4 w-4 text-green-300 shrink-0" /> No
+                requiere SQL
               </span>
               <span className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-green-300 shrink-0" /> Datos seguros
+                <CheckCircle2 className="h-4 w-4 text-green-300 shrink-0" />{" "}
+                Datos seguros
               </span>
             </div>
           </div>
@@ -145,7 +155,8 @@ export default function LandingPage() {
               Todo lo que necesitas en un solo lugar
             </h2>
             <p className="mx-auto mt-3 max-w-xl text-center text-gray-500 dark:text-gray-400">
-              Desde la carga de datos hasta el análisis, ContaIA simplifica cada paso.
+              Desde la carga de datos hasta el análisis, ContaIA simplifica cada
+              paso.
             </p>
             <div className="mt-14 sm:mt-16 grid gap-6 sm:gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
               {features.map((f) => (
@@ -185,7 +196,10 @@ export default function LandingPage() {
             </p>
             <div className="relative mt-16 grid gap-12 sm:grid-cols-3">
               {steps.map((s, i) => (
-                <div key={s.step} className="relative flex flex-col items-center text-center">
+                <div
+                  key={s.step}
+                  className="relative flex flex-col items-center text-center"
+                >
                   {i < steps.length - 1 && (
                     <div className="hidden sm:block absolute top-8 left-[60%] w-[80%] h-px border-t-2 border-dashed border-gray-300 dark:border-gray-600" />
                   )}
@@ -211,19 +225,25 @@ export default function LandingPage() {
         <section className="bg-gray-50 px-4 sm:px-6 py-20 sm:py-24 dark:bg-gray-900">
           <div className="mx-auto flex max-w-4xl flex-wrap justify-center gap-12 sm:gap-20 text-center">
             <div>
-              <div className="text-5xl sm:text-6xl font-bold text-blue-600 dark:text-blue-400 tracking-tight">100+</div>
+              <div className="text-5xl sm:text-6xl font-bold text-blue-600 dark:text-blue-400 tracking-tight">
+                100+
+              </div>
               <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">
                 Contadores activos
               </div>
             </div>
             <div>
-              <div className="text-5xl sm:text-6xl font-bold text-blue-600 dark:text-blue-400 tracking-tight">10K+</div>
+              <div className="text-5xl sm:text-6xl font-bold text-blue-600 dark:text-blue-400 tracking-tight">
+                10K+
+              </div>
               <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">
                 Facturas procesadas
               </div>
             </div>
             <div>
-              <div className="text-5xl sm:text-6xl font-bold text-blue-600 dark:text-blue-400 tracking-tight">5 min</div>
+              <div className="text-5xl sm:text-6xl font-bold text-blue-600 dark:text-blue-400 tracking-tight">
+                5 min
+              </div>
               <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">
                 En poner tu cuenta al día
               </div>
@@ -239,8 +259,8 @@ export default function LandingPage() {
               Empieza hoy gratis
             </h2>
             <p className="mx-auto mt-4 max-w-lg text-lg text-blue-100/90">
-              No necesitas tarjeta de crédito. Sube tus datos y descubre lo que la
-              IA puede hacer por tu contabilidad.
+              No necesitas tarjeta de crédito. Sube tus datos y descubre lo que
+              la IA puede hacer por tu contabilidad.
             </p>
             <div className="mt-10">
               <Link to="/register">
@@ -262,7 +282,10 @@ export default function LandingPage() {
           <span className="font-semibold text-gray-900 dark:text-gray-100">
             ContaIA
           </span>
-          <p>&copy; {new Date().getFullYear()} ContaIA. Todos los derechos reservados.</p>
+          <p>
+            &copy; {new Date().getFullYear()} ContaIA. Todos los derechos
+            reservados.
+          </p>
         </div>
       </footer>
     </div>

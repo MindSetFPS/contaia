@@ -25,8 +25,6 @@ export default function RegisterPage() {
   if (loading) return null;
   if (token) return <Navigate to="/app" replace />;
 
-
-
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
