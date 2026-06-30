@@ -27,6 +27,7 @@ from app.upload import router as upload_router
 from app.chat import router as chat_router
 from app.dashboard import router as dashboard_router
 from app.insights import router as insights_router
+from app.data import router as data_router
 
 app.include_router(auth_router, prefix="/api/auth")
 app.include_router(clients_router, prefix="/api/clients")
@@ -34,6 +35,7 @@ app.include_router(upload_router, prefix="/api")
 app.include_router(chat_router, prefix="/api")
 app.include_router(dashboard_router, prefix="/api")
 app.include_router(insights_router, prefix="/api")
+app.include_router(data_router, prefix="/api")
 
 _here = Path(__file__).resolve().parent
 # local dev: backend/app/main.py → ../../frontend/dist
