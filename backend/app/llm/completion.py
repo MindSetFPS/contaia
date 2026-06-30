@@ -3,9 +3,9 @@ from collections.abc import Generator
 
 from sqlmodel import Session
 
-from app.llm.agent import _execute_tool_calls, _try_parse_chart_config
-from app.llm.client import CYAN, GREEN, OLLAMA_MODEL, RED, RESET, YELLOW, client
-from app.llm.tools import TOOLS
+from app.llm.agent import _try_parse_chart_config
+from app.llm.client import CYAN, GREEN, OLLAMA_MODEL, RED, RESET, client
+from app.llm.tools import TOOLS, TOOL_REGISTRY
 
 
 def get_completion(
@@ -28,40 +28,81 @@ def get_completion_stream(
     messages = [*messages]
     chart_config = None
     for turn in range(10):
-        print(f"{CYAN}[stream] turn={turn} calling ollama (tool resolve){RESET}", flush=True)
+        print(f"{CYAN}[stream] turn={turn} calling ollama (streaming with tools){RESET}", flush=True)
         print(f"[PROMPT] {json.dumps(messages, ensure_ascii=False, indent=2)[:10000]}", flush=True)
         try:
-            response = client.chat(model=OLLAMA_MODEL, messages=messages, tools=TOOLS, options=options or {}, keep_alive="59m")
-            print(f"{GREEN}[stream] tool_resolve ok tool_calls={bool(response.message.tool_calls)}{RESET}", flush=True)
+            stream = client.chat(
+                model=OLLAMA_MODEL,
+                messages=messages,
+                tools=TOOLS,
+                options=options or {},
+                stream=True,
+                think=True,
+                keep_alive="59m",
+            )
         except Exception as e:
-            print(f"{RED}[stream] ollama ERROR during tool resolve: {e}{RESET}", flush=True)
+            print(f"{RED}[stream] ollama ERROR: {e}{RESET}", flush=True)
             yield {"content": f"Error del modelo: {e}", "thinking": ""}
             return
 
-        called, cc = _execute_tool_calls(messages, response, session, accountant_id, client_id)
-        if cc:
-            chart_config = cc
-        if called:
-            print(f"{YELLOW}[stream] tool was called, continuing{RESET}", flush=True)
+        content = ""
+        tool_calls = None
+        chunk_count = 0
+
+        for chunk in stream:
+            chunk_count += 1
+            thinking = getattr(chunk.message, "thinking", None) or ""
+            content_part = chunk.message.content or ""
+
+            if thinking:
+                yield {"thinking": thinking, "content": ""}
+
+            if content_part:
+                content += content_part
+                yield {"thinking": "", "content": content_part}
+
+            if chunk.message.tool_calls:
+                tool_calls = chunk.message.tool_calls
+
+        print(f"{GREEN}[stream] turn={turn} done chunks={chunk_count} tool_calls={bool(tool_calls)} content_len={len(content)}{RESET}", flush=True)
+
+        if tool_calls:
+            tc_list = [
+                {
+                    "type": "function",
+                    "function": {
+                        "name": tc.function.name,
+                        "arguments": tc.function.arguments,
+                    },
+                }
+                for tc in tool_calls
+            ]
+
+            messages.append({
+                "role": "assistant",
+                "content": content,
+                "tool_calls": tc_list,
+            })
+
+            for tc in tool_calls:
+                handler = TOOL_REGISTRY.get(tc.function.name)
+                if handler:
+                    print(f"[stream] running handler for {tc.function.name}", flush=True)
+                    result = handler(session, accountant_id, client_id, tc.function.arguments)
+                    print(f"[stream] raw tool output ({len(str(result))} chars): {result}", flush=True)
+                    messages.append({
+                        "role": "tool",
+                        "content": result,
+                    })
+                    if chart_config is None:
+                        chart_config = _try_parse_chart_config(result)
+                else:
+                    print(f"[stream] NO HANDLER for {tc.function.name}", flush=True)
+
             continue
 
-        print(f"{CYAN}[stream] calling ollama with stream=True{RESET}", flush=True)
-        print(f"[PROMPT] {json.dumps(messages, ensure_ascii=False, indent=2)[:10000]}", flush=True)
-        try:
-            stream = client.chat(model=OLLAMA_MODEL, messages=messages, options=options or {}, stream=True, think=True, keep_alive="59m")
-            chunk_count = 0
-            for chunk in stream:
-                chunk_count += 1
-                thinking = getattr(chunk.message, "thinking", None) or ""
-                content = chunk.message.content or ""
-                yield {"thinking": thinking, "content": content}
-            print(f"[stream] stream done chunk_count={chunk_count} chart_config={chart_config is not None}", flush=True)
-        except Exception as e:
-            print(f"[stream] ollama ERROR during stream: {e}", flush=True)
-            yield {"content": f"Error del modelo: {e}", "thinking": ""}
-
         if chart_config:
-            yield {"content": "", "thinking": "", "chart_config": chart_config}
+            yield {"thinking": "", "content": "", "chart_config": chart_config}
         return
 
     print("[stream] max turns exceeded", flush=True)
