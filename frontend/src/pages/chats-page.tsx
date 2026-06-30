@@ -1,4 +1,5 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { useParams } from "react-router-dom";
 import { useClient } from "@/contexts/client-context";
 import { useAuth } from "@/contexts/auth-context";
 import type { ChartConfig } from "@/types";
@@ -84,7 +85,10 @@ function ScrollContent({ children }: { children: React.ReactNode }) {
   const { scrollRef, contentRef } = useStickToBottomContext();
   return (
     <div ref={scrollRef} className="h-full w-full overflow-y-auto">
-      <div ref={contentRef} className="mx-auto max-w-3xl flex flex-col gap-8 p-4">
+      <div
+        ref={contentRef}
+        className="mx-auto max-w-3xl flex flex-col gap-8 p-4"
+      >
         {children}
       </div>
     </div>
@@ -94,6 +98,7 @@ function ScrollContent({ children }: { children: React.ReactNode }) {
 export default function ChatsPage() {
   const { selectedClient } = useClient();
   const { token } = useAuth();
+  const { conversationId } = useParams();
   const [messages, setMessages] = useState<AnyMessage[]>([
     {
       id: nextId++,
@@ -112,6 +117,12 @@ export default function ChatsPage() {
   ]);
   const [loading, setLoading] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    if (conversationId) {
+      console.log("[chats-page] loading conversation", conversationId);
+    }
+  }, [conversationId]);
 
   async function sendMessage(
     text: string,
@@ -417,39 +428,54 @@ export default function ChatsPage() {
                                 <ChartRenderer config={branch.chartConfig} />
                               )}
                             </>
-                          ) : (
-                            <span className="inline-flex">
-                              <span className="animate-pulse">▊</span>
+                          ) : branch.thinking ? null : loading ? (
+                            <span className="inline-flex pl-0.5">
+                              <svg
+                                className="animate-pulse-scale text-muted-foreground"
+                                width="10"
+                                height="10"
+                                viewBox="0 0 10 10"
+                                aria-label="Generando respuesta"
+                              >
+                                <circle
+                                  cx="5"
+                                  cy="5"
+                                  r="4"
+                                  fill="currentColor"
+                                />
+                              </svg>
                             </span>
-                          )}
+                          ) : null}
                         </span>
                       ))}
                     </MessageBranchContent>
-                    <MessageBranchSelector>
-                      <MessageBranchPrevious />
-                      <MessageBranchPage />
-                      <MessageBranchNext />
-                    </MessageBranchSelector>
+                    <div className="flex items-center">
+                      <MessageBranchSelector>
+                        <MessageBranchPrevious />
+                        <MessageBranchPage />
+                        <MessageBranchNext />
+                      </MessageBranchSelector>
+                      <MessageActions className={hoverClass}>
+                        <MessageAction
+                          label="Reintentar"
+                          onClick={() => handleRetry(msg.id)}
+                        >
+                          <RefreshCw className="size-3" />
+                        </MessageAction>
+                        <MessageAction
+                          label="Copiar"
+                          onClick={() =>
+                            navigator.clipboard.writeText(
+                              msg.branches[msg.currentBranch]?.content ?? "",
+                            )
+                          }
+                        >
+                          <CopyIcon className="size-3" />
+                        </MessageAction>
+                      </MessageActions>
+                    </div>
                   </MessageBranch>
                 </MessageContent>
-                <MessageActions className={hoverClass}>
-                  <MessageAction
-                    label="Reintentar"
-                    onClick={() => handleRetry(msg.id)}
-                  >
-                    <RefreshCw className="size-3" />
-                  </MessageAction>
-                  <MessageAction
-                    label="Copiar"
-                    onClick={() =>
-                      navigator.clipboard.writeText(
-                        msg.branches[msg.currentBranch]?.content ?? "",
-                      )
-                    }
-                  >
-                    <CopyIcon className="size-3" />
-                  </MessageAction>
-                </MessageActions>
               </Message>
             );
           })}
@@ -457,7 +483,7 @@ export default function ChatsPage() {
         <ConversationScrollButton />
       </Conversation>
 
-      <div className="mx-auto w-full max-w-3xl p-2 sm:p-3">
+      <div className="mx-auto w-full max-w-3xl px-2 pb-2">
         <PromptInput
           onSubmit={async (message) => {
             await handleSubmit(message.text);
