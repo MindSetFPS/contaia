@@ -23,7 +23,7 @@ export default function MainTabs() {
       onValueChange={setTab}
       className="flex flex-1 flex-col min-h-0"
     >
-      <div className="border-border border-b px-4 sm:px-6">
+      <div className="border-border border-b  overflow-x-auto overflow-y-hidden no-scrollbar">
         <TabsList variant="line">
           {tabs.map((t) => (
             <TabsTrigger key={t.value} value={t.value} className="gap-2 px-3">

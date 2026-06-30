@@ -126,7 +126,7 @@ export default function DataPage() {
   const labels = COLUMN_LABELS[tableType] ?? {};
 
   return (
-    <div className="flex flex-1 flex-col min-h-0 p-4 sm:p-6">
+    <div className="flex flex-1 flex-col min-h-0 sm:px-2">
       {!selectedClient ? (
         <div className="flex flex-1 items-center justify-center">
           <div className="flex items-center gap-2 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:bg-amber-950 dark:text-amber-200">
