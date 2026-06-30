@@ -23,7 +23,9 @@ export default function RegisterPage() {
   const [submitting, setSubmitting] = useState(false);
 
   if (loading) return null;
-  if (token) return <Navigate to="/dashboard" replace />;
+  if (token) return <Navigate to="/app" replace />;
+
+
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -41,7 +43,7 @@ export default function RegisterPage() {
     setSubmitting(true);
     try {
       await register(email, password, name);
-      navigate("/dashboard", { replace: true });
+      navigate("/app", { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al registrarse");
     } finally {

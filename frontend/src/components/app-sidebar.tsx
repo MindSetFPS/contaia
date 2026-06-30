@@ -1,20 +1,13 @@
 import { useState, useMemo } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth-context";
 import { useClient } from "@/contexts/client-context";
 import { useTheme } from "@/contexts/theme-context";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import CreateClientDialog from "@/components/create-client-dialog";
-import { Search, LogOut, Sun, Moon } from "lucide-react";
+import { Search, LogOut, Sun, Moon, User } from "lucide-react";
 import type { Client } from "@/types";
-
-const navItems = [
-  { label: "Dashboard", path: "/dashboard" },
-  { label: "Chats", path: "/chats" },
-  { label: "Subir datos", path: "/upload" },
-  { label: "Mi Perfil", path: "/me" },
-];
 
 export default function AppSidebar({ onClose }: { onClose?: () => void }) {
   const { user, logout } = useAuth();
@@ -22,7 +15,6 @@ export default function AppSidebar({ onClose }: { onClose?: () => void }) {
     useClient();
   const { actualTheme, toggleTheme } = useTheme();
   const navigate = useNavigate();
-  const location = useLocation();
   const [search, setSearch] = useState("");
 
   const filtered = useMemo(() => {
@@ -37,7 +29,7 @@ export default function AppSidebar({ onClose }: { onClose?: () => void }) {
 
   function handleSelect(client: Client) {
     setSelectedClient(client);
-    navigate("/dashboard");
+    navigate("/app");
     onClose?.();
   }
 
@@ -48,7 +40,7 @@ export default function AppSidebar({ onClose }: { onClose?: () => void }) {
       </div>
 
       <div className="flex flex-1 flex-col overflow-hidden">
-        <div className="border-border border-b px-3 py-3">
+        <div className="flex-1 overflow-y-auto border-border border-b px-3 py-3">
           <div className="mb-2 flex items-center justify-between px-1">
             <span className="text-xs font-medium text-muted-foreground">
               Clientes
@@ -66,7 +58,7 @@ export default function AppSidebar({ onClose }: { onClose?: () => void }) {
             />
           </div>
 
-          <div className="space-y-0.5 max-h-[35vh] overflow-y-auto">
+          <div className="space-y-0.5">
             {clientsLoading ? (
               <div className="flex justify-center py-4">
                 <Spinner />
@@ -91,27 +83,19 @@ export default function AppSidebar({ onClose }: { onClose?: () => void }) {
             )}
           </div>
         </div>
-
-        <nav className="flex-1 space-y-0.5 px-3 py-3">
-          {navItems.map((item) => {
-            const isActive = location.pathname === item.path;
-            return (
-              <button
-                key={item.path}
-                onClick={() => { navigate(item.path); onClose?.(); }}
-                className={`flex w-full items-center rounded-md px-3 py-1.5 text-left text-sm transition-colors ${isActive
-                    ? "bg-muted font-medium"
-                    : "text-sidebar-foreground hover:bg-muted"
-                  }`}
-              >
-                {item.label}
-              </button>
-            );
-          })}
-        </nav>
       </div>
 
       <div className="border-border border-t px-3 py-3 space-y-1">
+        <button
+          onClick={() => { navigate("/app/me"); onClose?.(); }}
+          className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-sm text-sidebar-foreground hover:bg-muted transition-colors"
+        >
+          <User className="size-3.5" />
+          Mi Perfil
+        </button>
+        <div className="px-3 py-1 text-xs text-muted-foreground truncate">
+          {user?.name}
+        </div>
         <button
           onClick={toggleTheme}
           className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-sm text-sidebar-foreground hover:bg-muted transition-colors"
@@ -123,9 +107,6 @@ export default function AppSidebar({ onClose }: { onClose?: () => void }) {
           )}
           {actualTheme === "dark" ? "Modo claro" : "Modo oscuro"}
         </button>
-        <div className="px-3 py-1 text-xs text-muted-foreground truncate">
-          {user?.name}
-        </div>
         <button
           onClick={logout}
           className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-sm text-sidebar-foreground hover:bg-muted transition-colors"

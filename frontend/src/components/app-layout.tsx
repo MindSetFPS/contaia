@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/auth-context";
 import { useClient } from "@/contexts/client-context";
 import AppSidebar from "@/components/app-sidebar";
+import MainTabs from "@/components/main-tabs";
 import {
   Sheet,
   SheetContent,
@@ -12,7 +13,9 @@ import { Menu } from "lucide-react";
 export default function AppLayout() {
   const { token, loading } = useAuth();
   const { selectedClient } = useClient();
+  const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const isProfile = location.pathname === "/app/me";
 
   if (loading) return null;
   if (!token) return <Navigate to="/login" replace />;
@@ -30,7 +33,7 @@ export default function AppLayout() {
       </Sheet>
 
       <div className="flex flex-1 flex-col min-w-0">
-        <header className="flex h-10 items-center justify-between border-border border-b px-2 sm:px-4 text-sm text-muted-foreground">
+        <header className="flex h-10 items-center justify-between px-2 sm:px-4 text-sm text-muted-foreground">
           <button
             className="flex md:hidden size-7 items-center justify-center rounded-md hover:bg-muted transition-colors -ml-1"
             onClick={() => setSidebarOpen(true)}
@@ -52,8 +55,10 @@ export default function AppLayout() {
           <div className="flex-1" />
         </header>
         <main className="flex flex-1 flex-col overflow-hidden h-0">
-          {selectedClient ? (
+          {isProfile ? (
             <Outlet />
+          ) : selectedClient ? (
+            <MainTabs />
           ) : (
             <div className="flex flex-1 items-center justify-center px-4">
               <p className="text-sm text-muted-foreground text-center">

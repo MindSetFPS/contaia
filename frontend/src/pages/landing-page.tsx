@@ -62,7 +62,7 @@ export default function LandingPage() {
   const { token, loading } = useAuth();
 
   if (loading) return null;
-  if (token) return <Navigate to="/dashboard" replace />;
+  if (token) return <Navigate to="/app" replace />;
 
   return (
     <div className="flex min-h-screen flex-col bg-white text-gray-900 dark:bg-gray-950 dark:text-gray-100">

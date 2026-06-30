@@ -21,7 +21,7 @@ export default function LoginPage() {
   const [submitting, setSubmitting] = useState(false);
 
   if (loading) return null;
-  if (token) return <Navigate to="/dashboard" replace />;
+  if (token) return <Navigate to="/app" replace />;
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -29,7 +29,7 @@ export default function LoginPage() {
     setSubmitting(true);
     try {
       await login(email, password);
-      navigate("/dashboard", { replace: true });
+      navigate("/app", { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al iniciar sesión");
     } finally {
