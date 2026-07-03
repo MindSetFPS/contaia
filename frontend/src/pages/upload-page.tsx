@@ -134,7 +134,8 @@ export default function UploadPage() {
   const isValid = selectedClient && tableType && file;
 
   return (
-    <div className="flex flex-1 flex-col items-center gap-4 sm:gap-6 p-4 sm:p-6">
+    <div className="flex flex-1 flex-col min-h-0 overflow-y-auto">
+      <div className="flex flex-col items-center gap-4 sm:gap-6 p-4 sm:p-6">
       <Card className="w-full max-w-xl">
         <CardHeader>
           <CardTitle>Subir datos</CardTitle>
@@ -293,6 +294,7 @@ export default function UploadPage() {
           )}
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

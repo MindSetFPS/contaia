@@ -34,7 +34,7 @@ export default function AppSidebar({ onClose }: { onClose?: () => void }) {
   }
 
   return (
-    <aside className="flex w-64 flex-col border-border md:border bg-sidebar text-sidebar-foreground min-h-screen">
+    <aside className="flex w-64 flex-col border-border md:border bg-sidebar text-sidebar-foreground min-h-dvh">
       <div className="border-border border-b px-4 py-3">
         <span className="text-sm font-semibold">ContaIA</span>
       </div>

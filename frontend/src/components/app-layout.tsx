@@ -21,7 +21,7 @@ export default function AppLayout() {
       </div>
 
       <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-        <SheetContent>
+        <SheetContent className="overflow-y-auto">
           <AppSidebar onClose={() => setSidebarOpen(false)} />
         </SheetContent>
       </Sheet>
