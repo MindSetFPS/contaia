@@ -1,9 +1,11 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { useClient } from "@/contexts/client-context";
 import { useAuth } from "@/contexts/auth-context";
 import type { ChartConfig } from "@/types";
 import ChartRenderer from "@/components/chart-renderer";
+import ConversationList from "@/components/conversation-list";
+import type { MockConversation } from "@/components/conversation-list";
 import {
   PromptInput,
   PromptInputTextarea,
@@ -32,10 +34,18 @@ import {
   ConversationScrollButton,
 } from "@/components/ai-elements/conversation";
 import { useStickToBottomContext } from "use-stick-to-bottom";
-import { CopyIcon, RefreshCw } from "lucide-react";
+import { CopyIcon, RefreshCw, PanelLeftClose, PanelLeft } from "lucide-react";
 
 let nextId = 0;
 let nextBranchId = 0;
+
+const WELCOME_BRANCH = {
+  branchId: nextBranchId++,
+  content:
+    "¡Hola! Soy tu asistente financiero. Pregúntame sobre ingresos, gastos, utilidad o ventas de tu cliente.",
+  thinking: "",
+  thinkingDone: true,
+};
 
 type Branch = {
   branchId: number;
@@ -95,11 +105,66 @@ function ScrollContent({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default function ChatsPage() {
-  const { selectedClient } = useClient();
-  const { token } = useAuth();
-  const { conversationId } = useParams();
-  const [messages, setMessages] = useState<AnyMessage[]>([
+function createWelcomeMessages(): AnyMessage[] {
+  return [
+    {
+      id: nextId++,
+      role: "assistant",
+      branches: [{ ...WELCOME_BRANCH, branchId: nextBranchId++ }],
+      currentBranch: 0,
+    },
+  ];
+}
+
+function createEmptyConversation(id: number, title: string): MockConversation {
+  return {
+    id,
+    title,
+    lastMessageAt: new Date().toISOString(),
+    messageCount: 0,
+    lastMessagePreview: "",
+  };
+}
+
+const MOCK_CONVERSATIONS: MockConversation[] = [
+  {
+    id: 1,
+    title: "Análisis de ventas Q1",
+    lastMessageAt: "2026-07-04T10:30:00",
+    messageCount: 12,
+    lastMessagePreview: "Las ventas totales en Q1 fueron...",
+  },
+  {
+    id: 2,
+    title: "Comparativa de gastos 2025 vs 2026",
+    lastMessageAt: "2026-07-03T15:45:00",
+    messageCount: 8,
+    lastMessagePreview: "Los gastos administrativos aumentaron un...",
+  },
+  {
+    id: 3,
+    title: "Proyección de utilidades",
+    lastMessageAt: "2026-07-02T09:15:00",
+    messageCount: 5,
+    lastMessagePreview:
+      "Con base en los datos actuales, la utilidad proyectada...",
+  },
+  {
+    id: 4,
+    title: "Declaración mensual de impuestos",
+    lastMessageAt: "2026-06-28T14:20:00",
+    messageCount: 15,
+    lastMessagePreview: "Recuerda que la fecha límite para...",
+  },
+];
+
+const MOCK_MESSAGES: Record<number, AnyMessage[]> = {
+  1: [
+    {
+      id: nextId++,
+      role: "user",
+      content: "¿Cuáles fueron las ventas totales del Q1 2026?",
+    },
     {
       id: nextId++,
       role: "assistant",
@@ -107,16 +172,150 @@ export default function ChatsPage() {
         {
           branchId: nextBranchId++,
           content:
-            "¡Hola! Soy tu asistente financiero. Pregúntame sobre ingresos, gastos, utilidad o ventas de tu cliente.",
+            "Las ventas totales del Q1 2026 fueron de $1,245,000.00 MXN, lo que representa un incremento del 12% respecto al mismo período del año anterior.",
           thinking: "",
           thinkingDone: true,
         },
       ],
       currentBranch: 0,
     },
-  ]);
+    {
+      id: nextId++,
+      role: "user",
+      content: "¿Cuál fue el producto más vendido?",
+    },
+    {
+      id: nextId++,
+      role: "assistant",
+      branches: [
+        {
+          branchId: nextBranchId++,
+          content:
+            "El producto más vendido en Q1 2026 fue el 'Servicio Premium Plus' con 245 unidades vendidas, generando $420,000 MXN en ingresos.",
+          thinking: "",
+          thinkingDone: true,
+        },
+      ],
+      currentBranch: 0,
+    },
+    {
+      id: nextId++,
+      role: "user",
+      content: "Muéstrame una gráfica de ventas por mes",
+    },
+    {
+      id: nextId++,
+      role: "assistant",
+      branches: [
+        {
+          branchId: nextBranchId++,
+          content: "Aquí tienes la gráfica de ventas mensuales del Q1 2026.",
+          thinking: "",
+          thinkingDone: true,
+          chartConfig: {
+            chart_type: "bar",
+            title: "Ventas Mensuales Q1 2026",
+            labels: ["Enero", "Febrero", "Marzo"],
+            datasets: [{ label: "Ventas", data: [380000, 415000, 450000] }],
+          },
+        },
+      ],
+      currentBranch: 0,
+    },
+  ],
+  2: [
+    {
+      id: nextId++,
+      role: "user",
+      content: "Compara los gastos de 2025 vs 2026",
+    },
+    {
+      id: nextId++,
+      role: "assistant",
+      branches: [
+        {
+          branchId: nextBranchId++,
+          content:
+            "Los gastos totales en 2025 fueron de $3,200,000 MXN, mientras que en lo que va de 2026 suman $1,850,000 MXN. Los gastos administrativos aumentaron un 8%, mientras que los operativos se redujeron un 3%.",
+          thinking: "",
+          thinkingDone: true,
+        },
+      ],
+      currentBranch: 0,
+    },
+  ],
+  3: [
+    {
+      id: nextId++,
+      role: "user",
+      content: "¿Cuál es la proyección de utilidad para este año?",
+    },
+    {
+      id: nextId++,
+      role: "assistant",
+      branches: [
+        {
+          branchId: nextBranchId++,
+          content:
+            "Con base en los datos actuales y las tendencias históricas, la utilidad neta proyectada para el cierre de 2026 es de $1,520,000 MXN, un 15% superior a 2025.",
+          thinking: "",
+          thinkingDone: true,
+        },
+      ],
+      currentBranch: 0,
+    },
+  ],
+  4: [
+    {
+      id: nextId++,
+      role: "user",
+      content: "¿Cuándo es la próxima declaración de impuestos?",
+    },
+    {
+      id: nextId++,
+      role: "assistant",
+      branches: [
+        {
+          branchId: nextBranchId++,
+          content:
+            "La próxima declaración mensual de impuestos vence el 17 de julio de 2026. Te recomiendo tener lista la información de ingresos y gastos de junio con al menos una semana de anticipación.",
+          thinking: "",
+          thinkingDone: true,
+        },
+      ],
+      currentBranch: 0,
+    },
+  ],
+};
+
+export default function ChatsPage() {
+  const { selectedClient } = useClient();
+  const { token } = useAuth();
+  const { conversationId } = useParams();
+  const [conversations, setConversations] =
+    useState<MockConversation[]>(MOCK_CONVERSATIONS);
+  const [activeConversationId, setActiveConversationId] = useState<
+    number | null
+  >(MOCK_CONVERSATIONS[0]?.id ?? null);
+  const [messages, setMessages] = useState<AnyMessage[]>(() => {
+    const id = MOCK_CONVERSATIONS[0]?.id;
+    return id && MOCK_MESSAGES[id]
+      ? [...MOCK_MESSAGES[id]]
+      : createWelcomeMessages();
+  });
+  const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 768);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const nextConvId = useRef(MOCK_CONVERSATIONS.length + 1);
   const [loading, setLoading] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    setIsMobile(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
 
   useEffect(() => {
     if (conversationId) {
@@ -159,19 +358,19 @@ export default function ChatsPage() {
         prev.map((m) =>
           m.id === assistantId && isAssistant(m)
             ? {
-              ...m,
-              branches: [
-                ...m.branches,
-                {
-                  branchId,
-                  content: "",
-                  thinking: "",
-                  thinkingDone: false,
-                  chartConfig: undefined,
-                },
-              ],
-              currentBranch: m.branches.length,
-            }
+                ...m,
+                branches: [
+                  ...m.branches,
+                  {
+                    branchId,
+                    content: "",
+                    thinking: "",
+                    thinkingDone: false,
+                    chartConfig: undefined,
+                  },
+                ],
+                currentBranch: m.branches.length,
+              }
             : m,
         ),
       );
@@ -266,12 +465,12 @@ export default function ChatsPage() {
                   const branches = m.branches.map((b, i) =>
                     i === m.branches.length - 1
                       ? {
-                        branchId: b.branchId,
-                        content,
-                        thinking,
-                        thinkingDone,
-                        chartConfig,
-                      }
+                          branchId: b.branchId,
+                          content,
+                          thinking,
+                          thinkingDone,
+                          chartConfig,
+                        }
                       : b,
                   );
                   return { ...m, branches };
@@ -293,13 +492,13 @@ export default function ChatsPage() {
               const branches = m.branches.map((b, i) =>
                 i === m.branches.length - 1
                   ? {
-                    branchId: b.branchId,
-                    content:
-                      "La respuesta está tardando demasiado. Intenta de nuevo.",
-                    thinking,
-                    thinkingDone,
-                    chartConfig,
-                  }
+                      branchId: b.branchId,
+                      content:
+                        "La respuesta está tardando demasiado. Intenta de nuevo.",
+                      thinking,
+                      thinkingDone,
+                      chartConfig,
+                    }
                   : b,
               );
               return { ...m, branches };
@@ -318,13 +517,13 @@ export default function ChatsPage() {
           const branches = m.branches.map((b, i) =>
             i === m.branches.length - 1
               ? {
-                branchId: b.branchId,
-                content:
-                  "Ocurrió un error al obtener respuesta. Intenta de nuevo.",
-                thinking,
-                thinkingDone,
-                chartConfig,
-              }
+                  branchId: b.branchId,
+                  content:
+                    "Ocurrió un error al obtener respuesta. Intenta de nuevo.",
+                  thinking,
+                  thinkingDone,
+                  chartConfig,
+                }
               : b,
           );
           return { ...m, branches };
@@ -375,8 +574,72 @@ export default function ChatsPage() {
     abortRef.current?.abort();
   }
 
-  return (
-    <div className="flex flex-1 flex-col h-0">
+  const handleSelectConversation = useCallback((id: number) => {
+    setActiveConversationId(id);
+    setMessages(
+      MOCK_MESSAGES[id] ? [...MOCK_MESSAGES[id]] : createWelcomeMessages(),
+    );
+  }, []);
+
+  function handleNewConversation() {
+    const id = nextConvId.current++;
+    const conv = createEmptyConversation(id, "Nueva conversación");
+    setConversations((prev) => [conv, ...prev]);
+    setActiveConversationId(id);
+    setMessages(createWelcomeMessages());
+  }
+
+  function handleDeleteConversation(id: number) {
+    setConversations((prev) => prev.filter((c) => c.id !== id));
+    if (activeConversationId === id) {
+      const remaining = conversations.filter((c) => c.id !== id);
+      const next = remaining[0];
+      if (next) {
+        handleSelectConversation(next.id);
+      } else {
+        setActiveConversationId(null);
+        setMessages(createWelcomeMessages());
+      }
+    }
+  }
+
+  function handleRenameConversation(id: number, title: string) {
+    setConversations((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, title } : c)),
+    );
+  }
+
+  const sidebarEl = (
+    <ConversationList
+      conversations={conversations}
+      activeId={activeConversationId}
+      onSelect={handleSelectConversation}
+      onNew={handleNewConversation}
+      onDelete={handleDeleteConversation}
+      onRename={handleRenameConversation}
+    />
+  );
+
+  const chatPanel = (
+    <div className="flex flex-1 flex-col min-w-0">
+      <div className="flex items-center h-9 px-2 border-border border-b">
+        <button
+          onClick={() => setSidebarOpen((v) => !v)}
+          className="flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted transition-colors"
+        >
+          {sidebarOpen ? (
+            <PanelLeftClose className="size-4" />
+          ) : (
+            <PanelLeft className="size-4" />
+          )}
+        </button>
+        {activeConversationId && (
+          <span className="ml-2 text-xs text-muted-foreground truncate">
+            {conversations.find((c) => c.id === activeConversationId)?.title}
+          </span>
+        )}
+      </div>
+
       <Conversation>
         <ScrollContent>
           {messages.map((msg, idx) => {
@@ -496,6 +759,25 @@ export default function ChatsPage() {
           />
         </PromptInput>
       </div>
+    </div>
+  );
+
+  return (
+    <div className="flex flex-1 h-0 overflow-hidden">
+      {isMobile ? (
+        <div
+          className="flex h-full transition-transform duration-200 ease-in-out"
+          style={{ transform: `translateX(${sidebarOpen ? "0" : "-18rem"})` }}
+        >
+          <div className="flex w-72 shrink-0 h-full">{sidebarEl}</div>
+          <div className="flex w-screen shrink-0 h-full">{chatPanel}</div>
+        </div>
+      ) : (
+        <div className="flex h-full w-full">
+          {sidebarOpen && <div className="flex h-full">{sidebarEl}</div>}
+          <div className="flex flex-1 min-w-0 h-full">{chatPanel}</div>
+        </div>
+      )}
     </div>
   );
 }

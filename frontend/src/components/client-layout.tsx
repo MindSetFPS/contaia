@@ -1,10 +1,13 @@
 import { useEffect } from "react";
-import { Navigate, Outlet, useParams } from "react-router-dom";
+import { Navigate, Outlet, useNavigate, useParams } from "react-router-dom";
 import { useClient } from "@/contexts/client-context";
+import { Button } from "@/components/ui/button";
 import MainTabs from "@/components/main-tabs";
+import { ArrowLeft } from "lucide-react";
 
 export default function ClientLayout() {
   const { clientId } = useParams();
+  const navigate = useNavigate();
   const { clients, clientsLoading, selectedClient, setSelectedClient } =
     useClient();
 
@@ -27,9 +30,30 @@ export default function ClientLayout() {
   }
 
   return (
-    <>
-      <MainTabs />
-      <Outlet />
-    </>
+    <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex h-10 items-center gap-2 border-border border-b px-2 sm:px-4 overflow-x-auto no-scrollbar">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            setSelectedClient(null);
+            navigate("/app");
+          }}
+          className="gap-1 text-muted-foreground shrink-0"
+        >
+          <ArrowLeft className="size-4" />
+          <span className="hidden sm:inline">Volver</span>
+        </Button>
+        <span className="shrink-0 text-sm text-muted-foreground">
+          <span className="font-medium text-foreground">
+            {selectedClient?.name}
+          </span>
+        </span>
+        <MainTabs inline />
+      </div>
+      <div className="flex flex-1 flex-col overflow-hidden">
+        <Outlet />
+      </div>
+    </div>
   );
 }
