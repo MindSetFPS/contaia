@@ -1,19 +1,16 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/auth-context";
 import { useClient } from "@/contexts/client-context";
-import { useTheme } from "@/contexts/theme-context";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import CreateClientDialog from "@/components/create-client-dialog";
-import { Search, LogOut, Sun, Moon, User } from "lucide-react";
+import UserMenu from "@/components/user-menu";
+import { Search } from "lucide-react";
 import type { Client } from "@/types";
 
 export default function AppSidebar({ onClose }: { onClose?: () => void }) {
-  const { user, logout } = useAuth();
   const { clients, clientsLoading, selectedClient, setSelectedClient } =
     useClient();
-  const { actualTheme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
 
@@ -86,38 +83,8 @@ export default function AppSidebar({ onClose }: { onClose?: () => void }) {
         </div>
       </div>
 
-      <div className="border-border border-t px-3 py-3 space-y-1">
-        <button
-          onClick={() => {
-            navigate("/app/me");
-            onClose?.();
-          }}
-          className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-sm text-sidebar-foreground hover:bg-muted transition-colors"
-        >
-          <User className="size-3.5" />
-          Mi Perfil
-        </button>
-        <div className="px-3 py-1 text-xs text-muted-foreground truncate">
-          {user?.name}
-        </div>
-        <button
-          onClick={toggleTheme}
-          className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-sm text-sidebar-foreground hover:bg-muted transition-colors"
-        >
-          {actualTheme === "dark" ? (
-            <Sun className="size-3.5" />
-          ) : (
-            <Moon className="size-3.5" />
-          )}
-          {actualTheme === "dark" ? "Modo claro" : "Modo oscuro"}
-        </button>
-        <button
-          onClick={logout}
-          className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-sm text-sidebar-foreground hover:bg-muted transition-colors"
-        >
-          <LogOut className="size-3.5" />
-          Cerrar sesión
-        </button>
+      <div className="border-border border-t px-3 py-3 flex justify-center">
+        <UserMenu />
       </div>
     </aside>
   );

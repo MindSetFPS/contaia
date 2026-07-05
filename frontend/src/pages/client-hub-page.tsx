@@ -1,8 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/auth-context";
 import { useClient } from "@/contexts/client-context";
-import { useTheme } from "@/contexts/theme-context";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import {
@@ -12,20 +10,15 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import CreateClientDialog from "@/components/create-client-dialog";
+import UserMenu from "@/components/user-menu";
 import {
   Search,
-  LogOut,
-  Sun,
-  Moon,
-  User,
   ArrowRight,
   Building2,
 } from "lucide-react";
 
 export default function ClientHubPage() {
-  const { user, logout } = useAuth();
   const { clients, clientsLoading, setSelectedClient } = useClient();
-  const { actualTheme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
 
@@ -49,31 +42,7 @@ export default function ClientHubPage() {
     <div className="flex flex-1 flex-col overflow-hidden">
       <header className="flex h-12 items-center justify-between border-border border-b px-4 sm:px-6">
         <span className="text-sm font-semibold">ContaIA</span>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={toggleTheme}
-            className="flex size-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted transition-colors"
-          >
-            {actualTheme === "dark" ? (
-              <Sun className="size-4" />
-            ) : (
-              <Moon className="size-4" />
-            )}
-          </button>
-          <button
-            onClick={() => navigate("/app/me")}
-            className="flex items-center gap-1.5 rounded-md px-2 py-1 text-sm text-muted-foreground hover:bg-muted transition-colors"
-          >
-            <User className="size-3.5" />
-            {user?.name}
-          </button>
-          <button
-            onClick={logout}
-            className="flex size-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted transition-colors"
-          >
-            <LogOut className="size-4" />
-          </button>
-        </div>
+        <UserMenu />
       </header>
 
       <div className="flex flex-1 flex-col overflow-y-auto">
