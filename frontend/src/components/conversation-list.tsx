@@ -153,8 +153,11 @@ export default function ConversationList({
 }: Props) {
   return (
     <aside className="flex h-full w-72 flex-col border-border border-r bg-sidebar text-sidebar-foreground">
-      <div className="border-border border-b px-3 py-3">
-        <Button size="sm" className="w-full gap-1.5" onClick={onNew}>
+      <div className="border-border px-3 py-3">
+        <Button
+          size="sm"
+          className="w-full gap-1.5 bg-gray-100 hover:bg-gray-200 text-black shadow-none"
+          onClick={onNew}>
           <Plus className="size-4" />
           Nueva conversación
         </Button>
