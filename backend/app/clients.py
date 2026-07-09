@@ -6,7 +6,7 @@ from sqlmodel import Session, select
 from app.auth import get_current_user
 from app.database import get_session
 from app.models import Accountant, Client
-from app.schemas import ClientCreate
+from app.schemas import ClientCreate, ClientUpdate
 
 router = APIRouter()
 
@@ -59,3 +59,54 @@ def create_client(
     session.commit()
     session.refresh(client)
     return client
+
+
+def _get_client_or_404(
+    client_id: int, user: Accountant, session: Session
+) -> Client:
+    client = session.exec(
+        select(Client).where(
+            Client.id == client_id, Client.accountant_id == user.id
+        )
+    ).first()
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found")
+    return client
+
+
+@router.put("/{client_id}")
+def update_client(
+    client_id: int,
+    body: ClientUpdate,
+    user: Accountant = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    client = _get_client_or_404(client_id, user, session)
+
+    if body.name is not None:
+        name = body.name.strip()
+        if not name:
+            raise HTTPException(status_code=400, detail="Client name cannot be empty")
+        client.name = name
+    if body.razon_social is not None:
+        client.razon_social = body.razon_social.strip() or None
+    if body.rfc is not None:
+        client.rfc = _validate_rfc(body.rfc)
+    if body.industry is not None:
+        client.industry = body.industry.strip() or None
+
+    session.add(client)
+    session.commit()
+    session.refresh(client)
+    return client
+
+
+@router.delete("/{client_id}", status_code=204)
+def delete_client(
+    client_id: int,
+    user: Accountant = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    client = _get_client_or_404(client_id, user, session)
+    session.delete(client)
+    session.commit()

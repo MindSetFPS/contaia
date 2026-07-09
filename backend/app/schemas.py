@@ -24,18 +24,51 @@ class ClientCreate(BaseModel):
     industry: str | None = None
 
 
-class ChatRequest(BaseModel):
+class ClientUpdate(BaseModel):
+    name: str | None = None
+    razon_social: str | None = None
+    rfc: str | None = None
+    industry: str | None = None
+
+
+class ConversationCreate(BaseModel):
     client_id: int
-    conversation_id: int | None = None
+    title: str | None = None
+
+
+class ConversationUpdate(BaseModel):
+    title: str
+
+
+class ConversationResponse(BaseModel):
+    id: int
+    client_id: int
+    title: str
+    message_count: int
+    last_message_at: str
+    created_at: str
+
+
+class MessageResponse(BaseModel):
+    id: int
+    role: str
+    content: str
+    chart_config: dict | None = None
+    created_at: str
+
+
+class GenerateTitleRequest(BaseModel):
+    model: str | None = None
+
+
+class ChatRequest(BaseModel):
+    conversation_id: int
     message: str
-    history: list[dict] = []
-    stream: bool = True
 
 
 class ChatResponse(BaseModel):
     answer_text: str
     chart_config: dict | None = None
-    conversation_id: int | None = None
 
 
 class InsightCreate(BaseModel):
