@@ -1,17 +1,10 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, MessageSquare, Trash2, Edit3, Check, X } from "lucide-react";
-
-export type MockConversation = {
-  id: number;
-  title: string;
-  lastMessageAt: string;
-  messageCount: number;
-  lastMessagePreview: string;
-};
+import type { Conversation } from "@/types";
 
 type Props = {
-  conversations: MockConversation[];
+  conversations: Conversation[];
   activeId: number | null;
   onSelect: (id: number) => void;
   onNew: () => void;
@@ -20,7 +13,7 @@ type Props = {
 };
 
 function formatDate(dateStr: string) {
-  const date = new Date(dateStr);
+  const date = new Date(dateStr.replace(" ", "T") + "Z");
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
@@ -46,7 +39,7 @@ function ConversationRow({
   onDelete,
   onRename,
 }: {
-  conv: MockConversation;
+  conv: Conversation;
   isActive: boolean;
   onSelect: () => void;
   onDelete: () => void;
@@ -115,7 +108,7 @@ function ConversationRow({
           <p className="truncate font-medium">{conv.title}</p>
         )}
         <p className="mt-0.5 truncate text-xs text-muted-foreground">
-          {formatDate(conv.lastMessageAt)}
+          {formatDate(conv.last_message_at)}
         </p>
       </div>
       <div className="flex shrink-0 gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -155,8 +148,7 @@ export default function ConversationList({
     <aside className="flex h-full w-72 flex-col border-border border-r bg-sidebar text-sidebar-foreground">
       <div className="border-border px-3 py-3">
         <Button
-          size="sm"
-          className="w-full gap-1.5 bg-gray-100 hover:bg-gray-200 text-black shadow-none"
+          className="w-full gap-1.5 justify-start bg-white/0 hover:bg-gray-200 text-black shadow-none"
           onClick={onNew}>
           <Plus className="size-4" />
           Nueva conversación
