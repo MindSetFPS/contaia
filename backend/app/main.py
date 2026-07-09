@@ -1,10 +1,8 @@
-import os
 from pathlib import Path
 
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from starlette.responses import FileResponse
 
 from app.database import init_db
@@ -25,6 +23,7 @@ from app.auth import router as auth_router
 from app.clients import router as clients_router
 from app.upload import router as upload_router
 from app.chat import router as chat_router
+from app.conversations import router as conversations_router
 from app.dashboard import router as dashboard_router
 from app.insights import router as insights_router
 from app.data import router as data_router
@@ -33,6 +32,7 @@ app.include_router(auth_router, prefix="/api/auth")
 app.include_router(clients_router, prefix="/api/clients")
 app.include_router(upload_router, prefix="/api")
 app.include_router(chat_router, prefix="/api")
+app.include_router(conversations_router, prefix="/api")
 app.include_router(dashboard_router, prefix="/api")
 app.include_router(insights_router, prefix="/api")
 app.include_router(data_router, prefix="/api")

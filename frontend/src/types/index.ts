@@ -36,6 +36,23 @@ export type ChatResponse = {
   chart_config: ChartConfig | null;
 };
 
+export type Conversation = {
+  id: number;
+  client_id: number;
+  title: string;
+  message_count: number;
+  last_message_at: string;
+  created_at: string;
+};
+
+export type Message = {
+  id: number;
+  role: "user" | "assistant";
+  content: string;
+  chart_config?: ChartConfig | null;
+  created_at: string;
+};
+
 export type Insight = {
   id: number;
   question: string;

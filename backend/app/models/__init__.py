@@ -6,6 +6,8 @@ from app.models.payroll import Payroll
 from app.models.product import Product
 from app.models.insight import Insight
 from app.models.upload import Upload
+from app.models.conversation import Conversation
+from app.models.message import Message
 
 __all__ = [
     "Accountant",
@@ -16,4 +18,6 @@ __all__ = [
     "Product",
     "Insight",
     "Upload",
+    "Conversation",
+    "Message",
 ]

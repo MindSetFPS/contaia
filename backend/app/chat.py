@@ -1,16 +1,20 @@
 import json
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
-from sqlmodel import Session
+from sqlalchemy import func
+from sqlmodel import Session, select
 
 from app.auth import get_current_user
 from app.database import get_session
-from app.llm import agent_loop, get_completion_stream
-from app.models import Accountant
-from app.schemas import ChatRequest, ChatResponse
+from app.llm import get_completion_stream
+from app.models import Accountant, Conversation, Message
+from app.schemas import ChatRequest
 
 router = APIRouter()
+
+MAX_MESSAGES = 512
 
 SYSTEM_PROMPT = """Eres un asistente financiero experto para contadores públicos en México.
 Tu labor es analizar la información financiera de los clientes y responder preguntas con claridad.
@@ -22,12 +26,38 @@ Tienes acceso a las siguientes herramientas:
 - `execute_sql`: ejecuta consultas SQL de solo lectura. En tu SQL puedes usar `:accountant_id` y `:client_id` como parámetros nombrados — el sistema los reemplazará automáticamente con los valores correctos del contador y cliente autenticados. Todas las tablas tienen columnas `accountant_id` y `client_id`. No escribas valores literales para estos campos.
 - `generate_chart`: ejecuta una consulta SQL de resumen y genera una configuración de gráfico JSON. La primera columna del resultado se usa como etiquetas y las siguientes como datos numéricos. Úsala cuando necesites visualizar datos."""
 
-def build_messages(body: ChatRequest) -> list[dict]:
-    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
-    for entry in body.history:
-        messages.append(entry)
-    messages.append({"role": "user", "content": body.message})
-    return messages
+
+def _load_history(session: Session, conversation_id: int, accountant_id: int) -> list[dict]:
+    messages = session.exec(
+        select(Message)
+        .where(Message.conversation_id == conversation_id)
+        .order_by(Message.created_at.asc())
+    ).all()
+
+    history = []
+    for m in messages:
+        entry = {"role": m.role, "content": m.content}
+        if m.chart_config:
+            entry["chart_config"] = m.chart_config
+        history.append(entry)
+    return history
+
+
+def _save_message(
+    session: Session,
+    conversation_id: int,
+    role: str,
+    content: str,
+    chart_config: dict | None = None,
+) -> Message:
+    msg = Message(
+        conversation_id=conversation_id,
+        role=role,
+        content=content,
+        chart_config=chart_config,
+    )
+    session.add(msg)
+    return msg
 
 
 @router.post("/chat")
@@ -37,30 +67,64 @@ def chat(
     user: Accountant = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
-    messages = build_messages(body)
+    conv = session.exec(
+        select(Conversation).where(
+            Conversation.id == body.conversation_id,
+            Conversation.accountant_id == user.id,
+        )
+    ).first()
+    if not conv:
+        raise HTTPException(status_code=404, detail="Conversation not found")
 
-    print(f"[chat] user={user.id} client={body.client_id} stream={body.stream} history_len={len(body.history)} message_len={len(body.message)}", flush=True)
+    msg_count = session.exec(
+        select(func.count(Message.id)).where(
+            Message.conversation_id == body.conversation_id,
+            Message.role.in_(["user", "assistant"]),
+        )
+    ).one()
+    if msg_count >= MAX_MESSAGES:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "error": "limit_reached",
+                "message": f"Esta conversación ha alcanzado el límite de {MAX_MESSAGES} mensajes. Crea una nueva conversación para continuar.",
+            },
+        )
 
-    if body.stream:
-        return _stream_response(messages, session, user.id, body.client_id)
+    history = _load_history(session, body.conversation_id, user.id)
+    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+    messages.extend(history)
+    messages.append({"role": "user", "content": body.message})
 
-    try:
-        answer, chart_config = agent_loop(messages, session, user.id, body.client_id)
-        print(f"[chat] answer len={len(answer)} chart_config={chart_config is not None}", flush=True)
-    except Exception as e:
-        print(f"[chat] ERROR: {e}", flush=True)
-        raise HTTPException(status_code=502, detail=str(e))
+    _save_message(session, body.conversation_id, "user", body.message)
+    session.commit()
 
-    return ChatResponse(
-        answer_text=answer,
-        chart_config=chart_config,
+    return _stream_response(
+        messages, session, user.id, conv.client_id, body.conversation_id
     )
 
 
-def _stream_response(messages: list[dict], session: Session, accountant_id: int, client_id: int):
+def _stream_response(
+    messages: list[dict],
+    session: Session,
+    accountant_id: int,
+    client_id: int,
+    conversation_id: int,
+):
+    full_content = ""
+    full_chart_config = None
+
     def generate():
+        nonlocal full_content, full_chart_config
         try:
-            for chunk in get_completion_stream(messages, session, accountant_id, client_id, options={"temperature": 0.7, "num_ctx": 65536}):
+            for chunk in get_completion_stream(
+                messages, session, accountant_id, client_id,
+                options={"temperature": 0.7, "num_ctx": 65536},
+            ):
+                if chunk.get("content"):
+                    full_content += chunk["content"]
+                if chunk.get("chart_config"):
+                    full_chart_config = chunk["chart_config"]
                 data = {}
                 if chunk.get("content"):
                     data["content"] = chunk["content"]
@@ -70,9 +134,26 @@ def _stream_response(messages: list[dict], session: Session, accountant_id: int,
                     data["chart_config"] = chunk["chart_config"]
                 if data:
                     yield f"data: {json.dumps(data)}\n\n"
-        except Exception:
+        except Exception as e:
+            print(f"[chat] stream error: {e}", flush=True)
             yield f"data: {json.dumps({'error': 'Stream error'})}\n\n"
-        yield "data: [DONE]\n\n"
+        finally:
+            content = full_content or "Lo siento, no pude generar una respuesta completa."
+            _save_message(
+                session,
+                conversation_id,
+                "assistant",
+                content,
+                full_chart_config,
+            )
+            conv = session.exec(
+                select(Conversation).where(Conversation.id == conversation_id)
+            ).first()
+            if conv:
+                conv.last_message_at = datetime.utcnow()
+                session.add(conv)
+            session.commit()
+            yield "data: [DONE]\n\n"
 
     return StreamingResponse(
         generate(),
